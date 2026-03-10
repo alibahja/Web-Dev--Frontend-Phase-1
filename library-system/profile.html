@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library · Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, sans-serif;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+
+        :root {
+            --bg-primary: #F8F9FC;
+            --surface: #FFFFFF;
+            --text-primary: #1F2937;
+            --text-secondary: #4A5568;
+            --accent: #2C3E68;
+            --border-light: #E2E8F0;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        body.dark-mode {
+            --bg-primary: #0A0F1F;
+            --surface: #1E2740;
+            --text-primary: #F0F4FA;
+            --text-secondary: #A0AEC0;
+            --accent: #5F7DB0;
+            --border-light: #2D3748;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            width: 100%;
+        }
+
+        /* navigation */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--surface);
+            padding: 0.4rem;
+            border-radius: 40px;
+            border: 1px solid var(--border-light);
+        }
+
+        .nav-link {
+            padding: 0.6rem 1.6rem;
+            border: none;
+            background: transparent;
+            border-radius: 32px;
+            font-weight: 500;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-link.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .nav-link:not(.active):hover {
+            background: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        /* cards */
+        .card {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--card-shadow);
+        }
+
+        /* profile header */
+        .profile-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.2rem;
+            font-weight: 500;
+        }
+
+        .user-info h2 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .user-meta {
+            color: var(--text-secondary);
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.3rem;
+        }
+
+        .rank-badge {
+            background: var(--accent);
+            color: white;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        /* analysis chips */
+        .analysis-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 2rem 0 1.5rem;
+        }
+
+        .analysis-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 60px;
+            padding: 0.5rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-secondary);
+        }
+
+        .analysis-item i {
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
+        .analysis-item strong {
+            color: var(--text-primary);
+            margin-left: 0.2rem;
+        }
+
+        /* lists */
+        .lists-section {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .list-category h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .book-scroll {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .book-chip {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-primary);
+        }
+
+        .book-chip .status {
+            font-size: 0.75rem;
+            background: var(--accent);
+            color: white;
+            border-radius: 30px;
+            padding: 0.2rem 0.7rem;
+            margin-left: 0.3rem;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--border-light);
+            margin: 1.5rem 0;
+        }
+
+        .footer-email {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- navigation -->
+        <div class="navbar">
+            <div class="logo">
+                <h1>📚 LibroView</h1>
+            </div>
+            <div class="nav-links">
+                <a href="profile.html" class="nav-link active">Profile</a>
+                <a href="settings.html" class="nav-link">Settings</a>
+            </div>
+        </div>
+
+        <!-- profile content -->
+        <div class="profile-header card">
+            <div class="avatar">
+                <span>AJ</span>
+            </div>
+            <div class="user-info">
+                <h2>Alex Johnson</h2>
+                <div class="user-meta">
+                    <span><i class="far fa-calendar-alt"></i> joined Mar 2025</span>
+                    <span><i class="fas fa-book-open"></i> 25 books read</span>
+                    <span class="rank-badge"><i class="fas fa-crown"></i> Book Lover</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- reading analysis -->
+        <div class="analysis-grid">
+            <div class="analysis-item"><i class="fas fa-calendar-check"></i> 📖 Books this month <strong>3</strong></div>
+            <div class="analysis-item"><i class="fas fa-file-alt"></i> Pages this year <strong>1,240</strong></div>
+            <div class="analysis-item"><i class="fas fa-heart"></i> Favorite genre <strong>Fantasy</strong></div>
+        </div>
+
+        <!-- lists -->
+        <div class="lists-section">
+            <div class="list-category">
+                <h3><i class="fas fa-star" style="color: #f5b342;"></i> Favorite books</h3>
+                <div class="book-scroll">
+                    <span class="book-chip"><i class="fas fa-book"></i> The Hobbit</span>
+                    <span class="book-chip"><i class="fas fa-book"></i> 1984</span>
+                    <span class="book-chip"><i class="fas fa-book"></i> Dune</span>
+                    <span class="book-chip"><i class="fas fa-book"></i> Name of the Wind</span>
+                </div>
+            </div>
+            <div class="list-category">
+                <h3><i class="fas fa-check-circle" style="color: #2ecc71;"></i> Books read</h3>
+                <div class="book-scroll">
+                    <span class="book-chip">The Hobbit</span>
+                    <span class="book-chip">1984</span>
+                    <span class="book-chip">Dune</span>
+                    <span class="book-chip">Harry Potter</span>
+                    <span class="book-chip">Mistborn</span>
+                    <span class="book-chip">The Martian</span>
+                </div>
+            </div>
+            <div class="list-category">
+                <h3><i class="fas fa-bookmark"></i> Wish to read</h3>
+                <div class="book-scroll">
+                    <span class="book-chip">The Winds of Winter</span>
+                    <span class="book-chip">The Doors of Stone</span>
+                    <span class="book-chip">The Silent Patient</span>
+                </div>
+            </div>
+            <div class="list-category">
+                <h3><i class="fas fa-hourglass-half"></i> Currently reading</h3>
+                <div class="book-scroll">
+                    <span class="book-chip"><i class="fas fa-spinner"></i> The Way of Kings</span>
+                    <span class="book-chip"><i class="fas fa-spinner"></i> Project Hail Mary</span>
+                </div>
+            </div>
+            <div class="list-category">
+                <h3><i class="fas fa-exchange-alt"></i> Borrowed / Bought</h3>
+                <div class="book-scroll">
+                    <span class="book-chip">The Martian <span class="status">borrowed</span></span>
+                    <span class="book-chip">Project Hail Mary <span class="status">bought</span></span>
+                    <span class="book-chip">Educated <span class="status">borrowed</span></span>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+        <div style="display: flex; gap: 1rem; align-items: center; color: var(--text-secondary);">
+            <i class="fas fa-trophy"></i> <span>Next achievement: 50 books → "Library Master" (25 more)</span>
+        </div>
+
+        <div class="footer-email">
+            <i class="far fa-copyright"></i> LibroView · reading reimagined
+        </div>
+    </div>
+
+    <script>
+        // apply dark mode from localStorage
+        (function() {
+            const saved = localStorage.getItem('libraryTheme');
+            if (saved === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</body>
+</html>

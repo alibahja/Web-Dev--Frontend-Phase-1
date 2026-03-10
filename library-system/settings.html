@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library · Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, sans-serif;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+
+        :root {
+            --bg-primary: #F8F9FC;
+            --surface: #FFFFFF;
+            --text-primary: #1F2937;
+            --text-secondary: #4A5568;
+            --accent: #2C3E68;
+            --border-light: #E2E8F0;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        body.dark-mode {
+            --bg-primary: #0A0F1F;
+            --surface: #1E2740;
+            --text-primary: #F0F4FA;
+            --text-secondary: #A0AEC0;
+            --accent: #5F7DB0;
+            --border-light: #2D3748;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            width: 100%;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--surface);
+            padding: 0.4rem;
+            border-radius: 40px;
+            border: 1px solid var(--border-light);
+        }
+
+        .nav-link {
+            padding: 0.6rem 1.6rem;
+            border: none;
+            background: transparent;
+            border-radius: 32px;
+            font-weight: 500;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-link.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .nav-link:not(.active):hover {
+            background: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--card-shadow);
+        }
+
+        .settings-card {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            font-weight: 500;
+        }
+
+        .setting-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-light);
+            border-radius: 34px;
+            transition: 0.2s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .qa-block {
+            margin: 1.5rem 0;
+        }
+
+        details {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 0.8rem;
+            border: 1px solid var(--border-light);
+        }
+
+        summary {
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        details p {
+            margin-top: 0.8rem;
+            color: var(--text-secondary);
+            padding-left: 0.5rem;
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 1.5px solid #c42e2e;
+            color: #c42e2e;
+            padding: 0.6rem 1.8rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .btn-danger:hover {
+            background: #c42e2e;
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-outline:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--border-light);
+            margin: 1.5rem 0;
+        }
+
+        .footer-email {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="navbar">
+            <div class="logo">
+                <h1>📚 LibroView</h1>
+            </div>
+            <div class="nav-links">
+                <a href="profile.html" class="nav-link">Profile</a>
+                <a href="settings.html" class="nav-link active">Settings</a>
+            </div>
+        </div>
+
+        <div class="card settings-card">
+            <h2 style="margin-bottom: 1.5rem; font-weight: 600;"><i class="fas fa-cog"></i> Settings</h2>
+
+            <!-- Dark mode toggle -->
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label"><i class="fas fa-moon"></i> Dark mode</div>
+                    <div class="setting-desc">Switch between light and dark theme</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="darkModeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Q&A section -->
+            <div style="margin: 1.5rem 0 0.5rem">
+                <div class="setting-label"><i class="fas fa-question-circle"></i> Frequently asked questions</div>
+            </div>
+            <div class="qa-block">
+                <details>
+                    <summary>How do I borrow a book?</summary>
+                    <p>Go to any book detail page and click "Borrow" if copies are available. The book will appear in your "Borrowed" list.</p>
+                </details>
+                <details>
+                    <summary>Can I delete my account permanently?</summary>
+                    <p>Yes, use the red button below. This action cannot be undone — all your lists and comments will be removed.</p>
+                </details>
+                <details>
+                    <summary>How are achievement ranks calculated?</summary>
+                    <p>5 books → Beginner Reader, 20 books → Book Lover, 50 books → Library Master. Keep reading!</p>
+                </details>
+            </div>
+
+            <!-- Delete account -->
+            <div class="setting-item" style="border-bottom: none; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <div class="setting-label"><i class="fas fa-exclamation-triangle" style="color: #c42e2e;"></i> Delete account</div>
+                    <div class="setting-desc">Erase all personal data and history</div>
+                </div>
+                <button class="btn-danger" onclick="if(confirm('Are you absolutely sure? This will remove your account.')) alert('Account deleted (demo).')">Delete</button>
+            </div>
+
+            <hr>
+
+            <!-- Contact email -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <span><i class="fas fa-envelope"></i> Need help? Message us</span>
+                <a href="mailto:library@support.com?subject=Question from user" class="btn-outline"><i class="fas fa-paper-plane"></i> library@support.com</a>
+            </div>
+            <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);"><i class="fas fa-info-circle"></i> You can also send a direct email to the website address.</p>
+        </div>
+
+        <div class="footer-email">
+            <i class="far fa-copyright"></i> LibroView · reading reimagined
+        </div>
+    </div>
+
+    <script>
+        // Dark mode toggle with localStorage sync
+        const toggle = document.getElementById('darkModeToggle');
+
+        // Apply saved theme on load
+        (function() {
+            const saved = localStorage.getItem('libraryTheme');
+            if (saved === 'dark') {
+                document.body.classList.add('dark-mode');
+                if (toggle) toggle.checked = true;
+            } else {
+                document.body.classList.remove('dark-mode');
+                if (toggle) toggle.checked = false;
+            }
+        })();
+
+        // Toggle change event
+        toggle.addEventListener('change', function() {
+            if (this.checked) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('libraryTheme', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('libraryTheme', 'light');
+            }
+        });
+    </script>
+</body>
+</html>
