@@ -12,6 +12,7 @@ import Register from './pages/Register'
 import Settings from './pages/Settings'
 import Profile from './pages/Profile'
 import Advanced from './pages/Advanced'
+import Admin from './pages/Admin'
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -47,6 +48,8 @@ function App() {
          />
 
          <Route path="/advanced" element={<Advanced darkMode={darkMode} setDarkMode={setDarkMode} />} />
+
+        <Route path="/admin" element={<Admin />} />
         
       </Routes>
     </BrowserRouter>
