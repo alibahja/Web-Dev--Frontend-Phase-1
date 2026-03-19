@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import defaultimage from "../assets/default-book-cover.jpg";
 
 const BookDetail = ({ darkMode }) => {
   const location = useLocation();
   const book = location.state?.book;
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, []);
   
   const [showRateModal, setShowRateModal] = useState(false);
   const [userRating, setUserRating] = useState(0);

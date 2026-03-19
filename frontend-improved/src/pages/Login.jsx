@@ -36,7 +36,7 @@ function Login({ darkMode }) {
         setMessage("Welcome back! Redirecting...");
 
         setTimeout(() => {
-          navigate("/dashboard");
+          navigate("/");
         }, 700);
       }
     } catch (err) {

@@ -47,7 +47,7 @@ function Register({ darkMode}) {
       if (response.data.success) {
         setMessage("Account created! Redirecting to login...");
         setTimeout(() => {
-          navigate("/");
+          navigate("/../Login");
         }, 1200);
       }
     } catch (err) {
