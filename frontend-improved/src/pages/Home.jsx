@@ -239,7 +239,7 @@ const Home = ({darkMode}) => {
         <button 
           onClick={() => setSidebarOpen(true)} 
           className={`p-2 rounded-xl border transition-all ${darkMode ? 'bg-[#2D3748] border-[#4A5568] text-white' : 'bg-[#F1F5F9] border-[#E2E8F0] text-black'} hover:opacity-80`}>
-          <span className="text-sm font-bold px-1">All</span>
+         <span className="text-xl font-bold">☰</span>
         </button>
 
        

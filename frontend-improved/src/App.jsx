@@ -13,6 +13,7 @@ import Settings from './pages/Settings'
 import Profile from './pages/Profile'
 import Advanced from './pages/Advanced'
 import Admin from './pages/Admin'
+import ScrollToTop from './pages/ScrollToTop'
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -20,7 +21,7 @@ function App() {
   return (
     <BrowserRouter>
     
-      
+      <ScrollToTop/>
       <Routes>
         
         <Route path="/" element={<Home darkMode={darkMode} setDarkMode={setDarkMode} />} />

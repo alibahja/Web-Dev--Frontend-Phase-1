@@ -77,7 +77,7 @@ const Comments = ({ darkMode }) => {
       }`}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className={`font-serif italic font-bold text-xl ${darkMode ? 'text-[#5F7DB0]' : 'text-[#2C3E68]'}`}>
-            LibCore
+            Library
           </Link>
           
         </div>
