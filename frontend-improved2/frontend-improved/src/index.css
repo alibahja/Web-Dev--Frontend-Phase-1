@@ -1,0 +1,308 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --bookverse-bg: #f4efe6;
+  --bookverse-bg-soft: #efe8dc;
+  --bookverse-surface: rgba(255, 251, 245, 0.9);
+  --bookverse-surface-strong: rgba(252, 245, 236, 0.97);
+  --bookverse-border: rgba(45, 40, 32, 0.12);
+  --bookverse-text: #1f1c18;
+  --bookverse-muted: #685f53;
+  --bookverse-ink: #23201a;
+  --bookverse-walnut: #4b3b2f;
+  --bookverse-bronze: #8f6e4d;
+  --bookverse-gold: #c4a071;
+  --bookverse-accent: #2e4a3f;
+  --bookverse-focus: #35584a;
+  --bookverse-danger: #b94c45;
+  --bookverse-shadow-sm: 0 8px 20px rgba(33, 27, 20, 0.08);
+  --bookverse-shadow-md: 0 18px 44px rgba(33, 27, 20, 0.12);
+}
+
+.dark {
+  color-scheme: dark;
+  --bookverse-bg: #121313;
+  --bookverse-bg-soft: #171919;
+  --bookverse-surface: rgba(28, 29, 27, 0.88);
+  --bookverse-surface-strong: rgba(35, 35, 31, 0.95);
+  --bookverse-border: rgba(214, 191, 157, 0.18);
+  --bookverse-text: #efe4d6;
+  --bookverse-muted: #b7a996;
+  --bookverse-ink: #f2e6d5;
+  --bookverse-walnut: #c8a682;
+  --bookverse-bronze: #b49067;
+  --bookverse-gold: #dcc39c;
+  --bookverse-accent: #8aa691;
+  --bookverse-focus: #9ab7a1;
+  --bookverse-danger: #e88f87;
+  --bookverse-shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --bookverse-shadow-md: 0 18px 44px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  color: var(--bookverse-text);
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  line-height: 1.62;
+  letter-spacing: 0.01em;
+  background:
+    radial-gradient(circle at 9% 12%, rgba(196, 160, 113, 0.16), transparent 28%),
+    radial-gradient(circle at 90% 10%, rgba(46, 74, 63, 0.1), transparent 26%),
+    linear-gradient(180deg, var(--bookverse-bg) 0%, var(--bookverse-bg-soft) 100%);
+  transition: background-color 240ms ease, color 240ms ease;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at 9% 12%, rgba(196, 160, 113, 0.08), transparent 28%),
+    radial-gradient(circle at 90% 10%, rgba(138, 166, 145, 0.11), transparent 26%),
+    linear-gradient(180deg, var(--bookverse-bg) 0%, var(--bookverse-bg-soft) 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.font-display {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  letter-spacing: 0.01em;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  display: block;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--bookverse-border);
+  border-radius: 1rem;
+  background: var(--bookverse-surface);
+  color: var(--bookverse-text);
+  padding: 0.9rem 1rem;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--bookverse-focus) 68%, white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bookverse-focus) 18%, transparent);
+}
+
+::placeholder {
+  color: color-mix(in srgb, var(--bookverse-muted) 78%, white);
+  opacity: 1;
+}
+
+.bookverse-grid {
+  background-image:
+    linear-gradient(rgba(53, 43, 33, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(53, 43, 33, 0.04) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+.dark .bookverse-grid {
+  background-image:
+    linear-gradient(rgba(255, 244, 224, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 244, 224, 0.04) 1px, transparent 1px);
+}
+
+.bookverse-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(24px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.bookverse-paper-layer {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06)),
+    repeating-linear-gradient(0deg, rgba(59, 48, 34, 0.02), rgba(59, 48, 34, 0.02) 1px, transparent 1px, transparent 3px);
+}
+
+.bookverse-button {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.bookverse-button:hover {
+  transform: translateY(-1px);
+}
+
+.bookverse-button:active {
+  transform: translateY(0);
+}
+
+.bookverse-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bookverse-focus) 22%, transparent);
+}
+
+.bookverse-book-card {
+  transition:
+    transform 240ms ease,
+    box-shadow 240ms ease,
+    border-color 240ms ease;
+}
+
+.bookverse-book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--bookverse-shadow-md);
+}
+
+.bookverse-competition-card {
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.bookverse-competition-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--bookverse-shadow-md);
+}
+
+.bookverse-page-enter {
+  animation: bookverse-page-enter 300ms ease-out;
+}
+
+.bookverse-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+
+.bookverse-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.bookverse-stagger {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: bookverse-stagger-in 420ms ease-out forwards;
+}
+
+.bookverse-progress-track {
+  position: relative;
+  height: 0.68rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bookverse-muted) 24%, white);
+}
+
+.bookverse-progress-track::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: var(--bookverse-progress, 0%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--bookverse-gold), var(--bookverse-accent));
+}
+
+.bookverse-progress-marker {
+  position: absolute;
+  top: 50%;
+  left: var(--bookverse-progress, 0%);
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: var(--bookverse-gold);
+  transform: translate(-50%, -50%);
+}
+
+.bookverse-auth-panel {
+  background:
+    radial-gradient(circle at 14% 16%, rgba(196, 160, 113, 0.18), transparent 30%),
+    linear-gradient(180deg, rgba(255, 252, 247, 0.92), rgba(246, 238, 226, 0.9));
+}
+
+.dark .bookverse-auth-panel {
+  background:
+    radial-gradient(circle at 14% 16%, rgba(138, 166, 145, 0.15), transparent 30%),
+    linear-gradient(180deg, rgba(32, 33, 31, 0.9), rgba(23, 23, 22, 0.94));
+}
+
+.bookverse-form-label {
+  letter-spacing: 0.19em;
+}
+
+@keyframes bookverse-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bookverse-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--bookverse-bg-soft) 85%, transparent);
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--bookverse-bronze) 72%, transparent);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--bookverse-accent) 72%, transparent);
+}
+
+@media (max-width: 768px) {
+  .bookverse-grid {
+    background-size: 24px 24px;
+  }
+}
