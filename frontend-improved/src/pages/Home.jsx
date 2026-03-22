@@ -134,6 +134,7 @@ const Home = ({ darkMode }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setIsLoggedIn(false);
+    setSidebarOpen(false)
     navigate('/');
   };
 
@@ -319,13 +320,27 @@ const Home = ({ darkMode }) => {
 
               <button
                 onClick={() => setSidebarOpen(true)}
-                className={`p-2 rounded-xl border transition-all ${
+                className={`group w-11 h-11 flex flex-col items-center justify-center rounded-xl transition-all duration-300 ${
                   darkMode
-                    ? 'bg-[#2D3748] border-[#4A5568] text-white'
-                    : 'bg-[#F1F5F9] border-[#E2E8F0] text-black'
-                } hover:opacity-80`}
+                    ? 'bg-[#1F2937] hover:bg-[#2A3441]'
+                    : 'bg-[#F8FAFC] hover:bg-[#E2E8F0]'
+                }`}
               >
-                <span className="text-sm font-bold px-1">All</span>
+                <span
+                  className={`block w-5 h-[2px] mb-1 rounded-full transition-all ${
+                    darkMode ? 'bg-white' : 'bg-black'
+                  } group-hover:w-6`}
+                />
+                <span
+                  className={`block w-5 h-[2px] mb-1 rounded-full transition-all ${
+                    darkMode ? 'bg-white' : 'bg-black'
+                  } group-hover:w-4`}
+                />
+                <span
+                  className={`block w-5 h-[2px] rounded-full transition-all ${
+                    darkMode ? 'bg-white' : 'bg-black'
+                  } group-hover:w-6`}
+                />
               </button>
             </div>
           </div>
@@ -334,173 +349,254 @@ const Home = ({ darkMode }) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 right-0 w-80 transform transition-transform duration-300 ease-in-out z-[60] 
-          overflow-y-auto h-full
-          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}
-          ${darkMode ? 'bg-[#1E2740] border-l border-[#2D3748]' : 'bg-white border-l border-[#E2E8F0]'}`}
+        className={`fixed inset-0 z-[60] ${sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
       >
-        <div className="p-6">
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className={`absolute top-4 right-4 text-2xl ${
-              darkMode ? 'text-[#A0AEC0] hover:text-[#F0F4FA]' : 'text-[#4A5568] hover:text-[#1F2937]'
+        {/* Overlay */}
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className={`absolute inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity duration-300 ${
+            sidebarOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+
+        {/* Panel */}
+        <aside
+          className={`absolute right-0 top-0 h-full w-[22rem] max-w-[90vw] transform transition-transform duration-300 ease-in-out overflow-y-auto shadow-2xl ${
+            sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+          } ${
+            darkMode
+              ? 'bg-[#111827] border-l border-[#2D3748] text-[#F0F4FA]'
+              : 'bg-[#FCFCFD] border-l border-[#E5E7EB] text-[#1F2937]'
+          }`}
+        >
+          {/* Header */}
+          <div
+            className={`sticky top-0 z-10 px-6 py-5 border-b backdrop-blur-md ${
+              darkMode
+                ? 'bg-[#111827]/95 border-[#2D3748]'
+                : 'bg-[#FCFCFD]/95 border-[#E5E7EB]'
             }`}
           >
-            ×
-          </button>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p
+                  className={`text-xs uppercase tracking-[0.2em] font-bold mb-2 ${
+                    darkMode ? 'text-[#93A4C3]' : 'text-[#64748B]'
+                  }`}
+                >
+                  Digital Shelf
+                </p>
+                <h2 className="text-3xl font-black tracking-tight flex items-center gap-2">
+                  <span>📚</span>
+                  <span>Library</span>
+                </h2>
+                <p
+                  className={`text-sm mt-2 ${
+                    darkMode ? 'text-[#A0AEC0]' : 'text-[#6B7280]'
+                  }`}
+                >
+                  Explore collections, tools, and your reader space.
+                </p>
+              </div>
 
-          <div className="mt-8">
-            {/* Library Section */}
-            <div className="mb-8">
-              <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-[#F0F4FA]' : 'text-[#1F2937]'}`}>
-                Library
-              </h3>
-
-              {!isLoggedIn && (
-                <div className="space-y-3">
-                  <Link to="/login" className="block">
-                    <button
-                      className={`w-full px-4 py-2 rounded-lg transition-colors duration-300 ${
-                        darkMode
-                          ? 'bg-[#0A0F1F] text-[#F0F4FA] hover:bg-[#2D3748]'
-                          : 'bg-[#F8F9FC] text-[#1F2937] hover:bg-[#E2E8F0]'
-                      }`}
-                    >
-                      Login
-                    </button>
-                  </Link>
-
-                  <Link to="/register" className="block">
-                    <button
-                      className={`w-full px-4 py-2 rounded-lg transition-colors duration-300 ${
-                        darkMode
-                          ? 'bg-[#5F7DB0] text-white hover:bg-[#4A6A9E]'
-                          : 'bg-[#2C3E68] text-white hover:bg-[#1F2F4F]'
-                      }`}
-                    >
-                      Sign up
-                    </button>
-                  </Link>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className={`group absolute top-4 right-4 w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-300 active:scale-90 ${
+                  darkMode
+                    ? 'bg-[#1F2937] hover:bg-[#2A3441]'
+                    : 'bg-white border border-[#E5E7EB] hover:bg-[#F3F4F6]'
+                }`}
+              >
+                <div className="relative w-4 h-4 transition-transform duration-300 group-hover:scale-135 group-hover:rotate-90">
+                  <span
+                    className={`absolute left-1/2 top-1/2 w-5 h-[2px] rounded-full -translate-x-1/2 -translate-y-1/2 rotate-45 ${
+                      darkMode ? 'bg-white' : 'bg-[#1F2937]'
+                    }`}
+                  />
+                  <span
+                    className={`absolute left-1/2 top-1/2 w-5 h-[2px] rounded-full -translate-x-1/2 -translate-y-1/2 -rotate-45 ${
+                      darkMode ? 'bg-white' : 'bg-[#1F2937]'
+                    }`}
+                  />
                 </div>
-              )}
-            </div>
-
-            {/* Browse Section */}
-            <div className="mb-8">
-              <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-[#F0F4FA]' : 'text-[#1F2937]'}`}>
-                Browse
-              </h3>
-              <ul className="space-y-2">
-                {['Best Sellers', 'New Releases', 'Popular Books', 'Academics', 'History', 'Romance'].map(
-                  (item, index) => (
-                    <li key={index}>
-                      <Link
-                        to={
-                          index < 3
-                            ? `/search?type=collection&q=${item.toLowerCase().replace(' ', '-')}`
-                            : `/search?type=genre&q=${item.toLowerCase()}`
-                        }
-                        className={`block py-1 transition-colors duration-300 ${
-                          darkMode
-                            ? 'text-[#A0AEC0] hover:text-[#5F7DB0]'
-                            : 'text-[#4A5568] hover:text-[#2C3E68]'
-                        }`}
-                      >
-                        {item}
-                      </Link>
-                    </li>
-                  )
-                )}
-
-                <li>
-                  <button
-                    onClick={handleRandomBook}
-                    className={`block py-1 transition-colors duration-300 ${
-                      darkMode
-                        ? 'text-[#5F7DB0] hover:text-[#7A98C0]'
-                        : 'text-[#2C3E68] hover:text-[#1F2F4F]'
-                    }`}
-                  >
-                    Random Book
-                  </button>
-                </li>
-
-                <li>
-                  <Link
-                    to="/advanced"
-                    className={`block py-1 transition-colors duration-300 ${
-                      darkMode
-                        ? 'text-[#A0AEC0] hover:text-[#5F7DB0]'
-                        : 'text-[#4A5568] hover:text-[#2C3E68]'
-                    }`}
-                  >
-                    Advanced Search
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Contribute Section */}
-            <div className="mb-8">
-              <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-[#F0F4FA]' : 'text-[#1F2937]'}`}>
-                Contribute
-              </h3>
-              <ul className="space-y-2">
-                {[
-                  ...(isLoggedIn ? ['View your Profile'] : []),
-                  'Join a Group',
-                  'Settings',
-                  ...(isLoggedIn ? ['Logout'] : [])
-                ].map((item, index) => {
-                  let route = '#';
-                  if (item === 'View your Profile') route = '/profile';
-                  if (item === 'Join a Group') route = '/groups';
-                  if (item === 'Settings') route = '/settings';
-                  if (item === 'Logout') route = null;
-
-                  return (
-                    <li key={index}>
-                      {item === 'Logout' ? (
-                        <button
-                          onClick={handleLogout}
-                          className={`block w-full text-left py-1 transition-colors duration-300 
-                          ${
-                            darkMode
-                              ? 'text-red-400 hover:text-red-300'
-                              : 'text-red-500 hover:text-red-600'
-                          }`}
-                        >
-                          Logout
-                        </button>
-                      ) : (
-                        <Link
-                          to={route}
-                          className={`block w-full text-left py-1 transition-colors duration-300 
-                          ${
-                            darkMode
-                              ? 'text-[#A0AEC0] hover:text-[#5F7DB0]'
-                              : 'text-[#4A5568] hover:text-[#2C3E68]'
-                          }`}
-                        >
-                          {item}
-                        </Link>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+              </button>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-[55] transition-opacity"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+          <div className="px-6 py-6 space-y-8">
+            {/* Auth / Welcome Card */}
+            <section
+              className={`rounded-3xl border p-5 ${
+                darkMode
+                  ? 'bg-gradient-to-br from-[#1E2740] to-[#162033] border-[#2D3748]'
+                  : 'bg-gradient-to-br from-[#F8FAFC] to-white border-[#E5E7EB]'
+              }`}
+            >
+              {isLoggedIn ? (
+                <div>
+                  <p
+                    className={`text-xs uppercase tracking-[0.2em] font-bold mb-2 ${
+                      darkMode ? 'text-[#93A4C3]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    Your Space
+                  </p>
+                  <h3 className="text-xl font-bold mb-2">Welcome back</h3>
+                  <p className={`text-sm mb-4 ${darkMode ? 'text-[#A0AEC0]' : 'text-[#6B7280]'}`}>
+                    Continue exploring your library and reader tools.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link to="/profile">
+                      <button
+                        className={`w-full px-4 py-3 rounded-2xl font-semibold transition-all ${
+                          darkMode
+                            ? 'bg-[#0F172A] text-white hover:bg-[#1E293B]'
+                            : 'bg-white border border-[#E5E7EB] text-[#1F2937] hover:bg-[#F8FAFC]'
+                        }`}
+                      >
+                        My Profile
+                      </button>
+                    </Link>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-3 rounded-2xl font-semibold transition-all bg-red-500 text-white hover:bg-red-600"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p
+                    className={`text-xs uppercase tracking-[0.2em] font-bold mb-2 ${
+                      darkMode ? 'text-[#93A4C3]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    Reader Access
+                  </p>
+                  <h3 className="text-xl font-bold mb-2">Join the Library</h3>
+                  <p className={`text-sm mb-4 ${darkMode ? 'text-[#A0AEC0]' : 'text-[#6B7280]'}`}>
+                    Sign in to manage your profile, groups, and personalized features.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link to="/login">
+                      <button
+                        className={`w-full px-4 py-3 rounded-2xl font-semibold transition-all ${
+                          darkMode
+                            ? 'bg-[#0F172A] text-white hover:bg-[#1E293B]'
+                            : 'bg-white border border-[#E5E7EB] text-[#1F2937] hover:bg-[#F8FAFC]'
+                        }`}
+                      >
+                        Login
+                      </button>
+                    </Link>
+
+                    <Link to="/register">
+                      <button
+                        className={`w-full px-4 py-3 rounded-2xl font-semibold transition-all ${
+                          darkMode
+                            ? 'bg-[#5F7DB0] text-white hover:bg-[#4A6A9E]'
+                            : 'bg-[#2C3E68] text-white hover:bg-[#1F2F4F]'
+                        }`}
+                      >
+                        Sign Up
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Browse Section */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">🔎</span>
+                <h3 className="text-lg font-bold">Browse</h3>
+              </div>
+
+              <div className="space-y-2">
+                {[
+                  { label: 'Best Sellers', to: '/search?type=collection&q=best-sellers' },
+                  { label: 'New Releases', to: '/search?type=collection&q=new-releases' },
+                  { label: 'Popular Books', to: '/search?type=collection&q=popular-books' },
+                  { label: 'Academics', to: '/search?type=genre&q=academics' },
+                  { label: 'History', to: '/search?type=genre&q=history' },
+                  { label: 'Romance', to: '/search?type=genre&q=romance' },
+                  { label: 'Advanced Search', to: '/advanced' },
+                ].map((item) => (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    className={`flex items-center justify-between rounded-2xl px-4 py-3 transition-all ${
+                      darkMode
+                        ? 'hover:bg-[#1F2937] text-[#D1D5DB]'
+                        : 'hover:bg-[#F3F4F6] text-[#374151]'
+                    }`}
+                  >
+                    <span className="font-medium">{item.label}</span>
+                    <span className={`${darkMode ? 'text-[#64748B]' : 'text-[#94A3B8]'}`}>→</span>
+                  </Link>
+                ))}
+
+                <button
+                  onClick={handleRandomBook}
+                  className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 transition-all ${
+                    darkMode
+                      ? 'hover:bg-[#1F2937] text-[#D1D5DB]'
+                      : 'hover:bg-[#F3F4F6] text-[#374151]'
+                  }`}
+                >
+                  <span className="font-medium">Random Book</span>
+                  <span className={`${darkMode ? 'text-[#64748B]' : 'text-[#94A3B8]'}`}>🎲</span>
+                </button>
+              </div>
+            </section>
+
+            {/* Community & Tools */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">🛠️</span>
+                <h3 className="text-lg font-bold">Community & Tools</h3>
+              </div>
+
+              <div className="space-y-2">
+                {[
+                  ...(isLoggedIn ? [{ label: 'View your Profile', to: '/profile' }] : []),
+                  { label: 'Join a Group', to: '/groups' },
+                  { label: 'Settings', to: '/settings' },
+                ].map((item) => (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    className={`flex items-center justify-between rounded-2xl px-4 py-3 transition-all ${
+                      darkMode
+                        ? 'hover:bg-[#1F2937] text-[#D1D5DB]'
+                        : 'hover:bg-[#F3F4F6] text-[#374151]'
+                    }`}
+                  >
+                    <span className="font-medium">{item.label}</span>
+                    <span className={`${darkMode ? 'text-[#64748B]' : 'text-[#94A3B8]'}`}>→</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {/* Footer note */}
+            <section
+              className={`rounded-3xl px-4 py-4 text-sm ${
+                darkMode ? 'bg-[#0F172A] text-[#94A3B8]' : 'bg-[#F8FAFC] text-[#6B7280]'
+              }`}
+            >
+              <p className="leading-relaxed">
+                Organize your reading, discover new books, and connect with other readers through one elegant library experience.
+              </p>
+            </section>
+          </div>
+        </aside>
+      </div>
 
       {/* Hero Section */}
       <section className="h-screen w-full relative pt-16">
