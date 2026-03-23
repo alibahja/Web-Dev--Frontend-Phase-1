@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import defaultimage from "../assets/default-book-cover.jpg";
 
 const BookDetail = ({ darkMode }) => {
   const location = useLocation();
   const book = location.state?.book;
+
+  const isRandom = location.state?.isRandom || false;
+  const [showDiceAnimation, setShowDiceAnimation] = useState(isRandom);
 
   useEffect(() => {
     window.scrollTo({
@@ -16,6 +20,16 @@ const BookDetail = ({ darkMode }) => {
   const [showRateModal, setShowRateModal] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+
+  useEffect(() => {
+    if (isRandom) {
+      const timer = setTimeout(() => {
+        setShowDiceAnimation(false);
+      }, 1400);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isRandom]);
 
   // Expanded fallback data with new attributes
   const data = book || {
@@ -71,10 +85,10 @@ const BookDetail = ({ darkMode }) => {
 
           <div className="flex items-center space-x-6">
            <Link 
-  to={`/comments/book/${data.id}`} 
-  state={{ type: "book", data }} 
-  className="text-2xl hover:scale-110 transition-transform"
->
+            to={`/comments/book/${data.id}`} 
+            state={{ type: "book", data }} 
+            className="text-2xl hover:scale-110 transition-transform"
+          >
   💬
 </Link>
             <div className={`h-8 w-[1px] ${darkMode ? 'bg-gray-700' : 'bg-white/20'}`}></div>
@@ -89,7 +103,31 @@ const BookDetail = ({ darkMode }) => {
       }`} />
 
       <main className="relative pt-32 pb-20 px-4 md:px-10 max-w-7xl mx-auto space-y-20">
-        
+       
+        <AnimatePresence>
+          {showDiceAnimation && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed top-0 left-0 w-screen h-screen z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm"            >
+              <motion.div
+                initial={{ scale: 0.7, rotate: 0 }}
+                animate={{ scale: [0.7, 1.15, 1], rotate: [0, 180, 360, 540] }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ duration: 1.1, ease: "easeInOut" }}
+                className={`w-24 h-24 rounded-3xl shadow-2xl flex items-center justify-center text-4xl font-bold border-4 ${
+                  darkMode
+                    ? "bg-[#1E2740] border-[#5F7DB0] text-white"
+                    : "bg-white border-[#2C3E68] text-[#1F2937]"
+                }`}
+              >
+                🎲
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* MAIN DETAIL SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           

@@ -209,14 +209,30 @@ const Home = ({ darkMode }) => {
     }, interval);
   };
 
-  const handleRandomBook = () => console.log('Random book clicked');
+  const handleRandomBook = () => {
+    if (!dummyBooks || dummyBooks.length === 0) return;
 
-  const dummyBooks = Array(10).fill({
-    id: 1,
-    title: 'Library Book Title',
+    const randomIndex = Math.floor(Math.random() * dummyBooks.length);
+    const randomBook = dummyBooks[randomIndex];
+
+    setSidebarOpen(false);
+
+    navigate(`/book/${randomBook.id}`, {
+      state: {
+        book: randomBook,
+        isRandom: true,
+      },
+    });
+  };
+
+  const dummyBooks = Array.from({ length: 10 }, (_, i) => ({
+    id: i + 1,
+    title: `Library Book ${i + 1}`,
     price: 19.99,
     rating: 4.5,
-  });
+    author: "Unknown Author",
+    description: "A randomly selected book from the library."
+  }));
 
   return (
     <div
