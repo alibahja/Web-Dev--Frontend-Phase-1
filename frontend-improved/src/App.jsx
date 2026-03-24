@@ -14,6 +14,9 @@ import Profile from './pages/Profile'
 import Advanced from './pages/Advanced'
 import Admin from './pages/Admin'
 import ScrollToTop from './pages/ScrollToTop'
+import AllGames from './pages/AllGames'
+import GameDetails from './pages/GameDetails'
+import RoadMap from './pages/RoadMap'
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -51,6 +54,12 @@ function App() {
          <Route path="/advanced" element={<Advanced darkMode={darkMode} setDarkMode={setDarkMode} />} />
 
         <Route path="/admin" element={<Admin />} />
+
+        <Route path="/all-games" element={<AllGames darkMode={darkMode} setDarkMode={setDarkMode} />} />
+
+        <Route path="/games/:id" element={<GameDetails darkMode={darkMode} setDarkMode={setDarkMode} />} />
+
+        <Route path="/roadmap/:id" element={<RoadMap darkMode={darkMode} setDarkMode={setDarkMode} />} />
         
       </Routes>
     </BrowserRouter>
