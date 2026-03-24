@@ -98,7 +98,140 @@ const BookSection = ({ title, books, darkMode }) => {
     </section>
   );
 };
+// --- Sub-Component: Game Card ---
+const GameCard = ({ game, darkMode }) => {
+  return (
+    <div
+      className={`group relative w-80 h-52 rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2 ${
+        darkMode ? 'bg-[#1E2740]' : 'bg-white shadow-xl'
+      }`}
+    >
+      {/* Background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+        style={{ backgroundImage: `url(${game.image})` }}
+      >
+        <div className="absolute inset-0 bg-black/50" />
+      </div>
 
+      {/* Content */}
+      <div className="relative h-full flex flex-col justify-end p-5 text-white">
+        <h3 className="text-xl font-bold mb-1">{game.title}</h3>
+        <p className="text-sm opacity-80 mb-3">{game.description}</p>
+
+        <button className="self-start px-4 py-2 bg-white text-[#2C3E68] rounded-xl font-semibold text-sm transition-all hover:bg-[#5F7DB0] hover:text-white">
+          View Roadmap
+        </button>
+      </div>
+    </div>
+  );
+};
+// --- Game Section ---
+// --- Game Section ---
+const GameSection = ({ darkMode }) => {
+  const scrollRef = useRef(null);
+  const sectionRef = useRef(null);
+  const [showGames, setShowGames] = useState(false);
+
+  const games = [
+    {
+      title: "Master Web Development",
+      description: "HTML → CSS → JavaScript → React",
+      image: hero,
+    },
+    {
+      title: "Become a Data Scientist",
+      description: "Python → Data Analysis → ML",
+      image: hero,
+    },
+    {
+      title: "History Explorer",
+      description: "Ancient → Medieval → Modern",
+      image: hero,
+    },
+    {
+      title: "Fitness & Nutrition",
+      description: "Training → Diet → Recovery",
+      image: hero,
+    },
+  ];
+
+  // Scroll buttons
+  const scroll = (direction) => {
+    if (!scrollRef.current) return;
+
+    scrollRef.current.scrollBy({
+      left: direction === "left" ? -300 : 300,
+      behavior: "smooth",
+    });
+  };
+
+  // Animation trigger
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShowGames(true);
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (sectionRef.current) observer.observe(sectionRef.current);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section ref={sectionRef} className="py-16 w-full px-6 md:px-10 overflow-hidden">
+      <h2
+        className={`text-3xl font-bold mb-10 transition-all duration-700 ${
+          showGames ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+        } ${darkMode ? "text-white" : "text-[#1F2937]"}`}
+      >
+        Reading Games
+      </h2>
+
+      <div className="relative group">
+        {/* LEFT ARROW */}
+        <button
+          onClick={() => scroll("left")}
+          className="absolute left-[-20px] top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          &larr;
+        </button>
+
+        {/* SCROLL CONTAINER */}
+        <div
+          ref={scrollRef}
+          className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+        >
+          {games.map((game, index) => (
+            <div
+              key={index}
+              className={`transition-all duration-700 transform ${
+                showGames
+                  ? "translate-x-0 opacity-100"
+                  : "translate-x-[-100px] opacity-0"
+              }`}
+              style={{ transitionDelay: `${index * 150}ms` }}
+            >
+              <GameCard game={game} darkMode={darkMode} />
+            </div>
+          ))}
+        </div>
+
+        {/* RIGHT ARROW */}
+        <button
+          onClick={() => scroll("right")}
+          className="absolute right-[-20px] top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          &rarr;
+        </button>
+      </div>
+    </section>
+  );
+};
 const Footer = ({ darkMode }) => {
   return (
     <div
@@ -702,6 +835,8 @@ const Home = ({ darkMode }) => {
           </div>
         </div>
       </section>
+      {/* Game Section */}
+<GameSection darkMode={darkMode} />
 
       {/* Book Sliders */}
       <BookSection title="Best Sellers" books={dummyBooks} darkMode={darkMode} />
