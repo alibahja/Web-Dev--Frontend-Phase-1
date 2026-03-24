@@ -101,6 +101,7 @@ const BookSection = ({ title, books, darkMode }) => {
 // --- Sub-Component: Game Card ---
 const GameCard = ({ game, darkMode }) => {
   return (
+    <Link to="/games/:id">
     <div
       className={`group relative w-80 h-52 rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2 ${
         darkMode ? 'bg-[#1E2740]' : 'bg-white shadow-xl'
@@ -124,6 +125,7 @@ const GameCard = ({ game, darkMode }) => {
         </button>
       </div>
     </div>
+    </Link>
   );
 };
 // --- Game Section ---
@@ -184,6 +186,7 @@ const GameSection = ({ darkMode }) => {
 
   return (
     <section ref={sectionRef} className="py-16 w-full px-6 md:px-10 overflow-hidden">
+      <Link to="all-games">
       <h2
         className={`text-3xl font-bold mb-10 transition-all duration-700 ${
           showGames ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
@@ -191,6 +194,7 @@ const GameSection = ({ darkMode }) => {
       >
         Reading Games
       </h2>
+    </Link>
 
       <div className="relative group">
         {/* LEFT ARROW */}
