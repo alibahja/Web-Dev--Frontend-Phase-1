@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import defaultimage from "../assets/default-book-cover.jpg";
-
+import CustomAlert from "./CustomAlert";
 
 const BookSplash = ({ darkMode, title, author, onDone }) => {
   const [phase, setPhase] = useState("closed");
@@ -152,6 +152,7 @@ const BookSplash = ({ darkMode, title, author, onDone }) => {
 };
 
 const BookDetail = ({ darkMode }) => {
+  const [showAlert, setShowAlert] = useState(false);
   const location = useLocation();
   const book = location.state?.book;
   const isRandom = location.state?.isRandom || false;
@@ -289,11 +290,14 @@ const BookDetail = ({ darkMode }) => {
               <img src={data.coverUrl || defaultimage} alt={data.title} className="w-full h-auto object-cover" />
             </div>
             <div className="flex flex-col gap-4">
-              <button className={`py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 ${
-                darkMode ? "bg-[#5F7DB0] hover:bg-[#4A6A9E]" : "bg-[#2C3E68] hover:bg-[#1F2F4F]"
-              } text-white`}>
-                📖 Borrow Now
-              </button>
+             <button
+  onClick={() => setShowAlert(true)}
+  className={`py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 ${
+    darkMode ? "bg-[#5F7DB0] hover:bg-[#4A6A9E]" : "bg-[#2C3E68] hover:bg-[#1F2F4F]"
+  } text-white`}
+>
+  📖 Borrow Now
+</button>
               <button className={`py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 ${
                 darkMode ? "bg-[#6c6f74] hover:bg-[#3c4047]" : "bg-[#d41b1b] hover:bg-[#a62323]"
               } text-white`}>
@@ -418,6 +422,13 @@ const BookDetail = ({ darkMode }) => {
           </div>
         </div>
       )}
+      <CustomAlert
+  show={showAlert}
+  onClose={() => setShowAlert(false)}
+  title="Book Borrowed!"
+  message="You have successfully borrowed this book. Enjoy reading 📚"
+  type="success"
+/>
     </div>
   );
 };
