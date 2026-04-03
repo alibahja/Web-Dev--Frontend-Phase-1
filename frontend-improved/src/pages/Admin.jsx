@@ -21,7 +21,7 @@ function Admin() {
         {/* HERO */}
         <section className="text-center text-white mb-10">
           <h1 className="text-3xl md:text-5xl font-bold mb-3">
-            Library Administration
+            BiblioTech Administration
           </h1>
           <p className="text-lg opacity-90">
             Manage books, users, and borrowing activity with elegance and control.
