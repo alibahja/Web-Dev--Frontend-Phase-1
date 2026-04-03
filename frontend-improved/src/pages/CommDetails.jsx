@@ -68,7 +68,7 @@ const CommunityDetail = ({ darkMode }) => {
         <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-10">
             <span className={`font-serif italic font-black text-2xl tracking-tighter ${darkMode ? 'text-[#5F7DB0]' : 'text-[#2C3E68]'}`}>
-              Library
+              BiblioTech
             </span>
             <div className="hidden md:flex space-x-6 font-bold text-sm">
               <Link to="/" className="hover:opacity-70 transition">Home</Link>
