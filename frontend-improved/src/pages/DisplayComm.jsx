@@ -67,7 +67,7 @@ const handleCreateCommunity = (e) => {
         darkMode ? 'bg-[#1E2740] border-[#2D3748]' : 'bg-white border-[#E2E8F0] shadow-sm'
       }`}>
         <span className={`font-serif italic font-bold text-xl tracking-tight ${darkMode ? 'text-[#5F7DB0]' : 'text-[#2C3E68]'}`}>
-          Library
+          BiblioTech
         </span>
 
         <div className="flex items-center gap-6">
