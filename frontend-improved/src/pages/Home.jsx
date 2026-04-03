@@ -397,7 +397,7 @@ const Home = ({ darkMode }) => {
                 shadow-sm transition-all duration-300`}
               >
                 <span className="font-serif italic font-bold text-xl tracking-tight">
-                  Library
+                  BiblioTech
                 </span>
               </div>
             </div>
