@@ -541,7 +541,7 @@ const Home = ({ darkMode }) => {
                 </p>
                 <h2 className="text-3xl font-black tracking-tight flex items-center gap-2">
                   <span>📚</span>
-                  <span>Library</span>
+                  <span>BiblioTech</span>
                 </h2>
                 <p
                   className={`text-sm mt-2 ${
