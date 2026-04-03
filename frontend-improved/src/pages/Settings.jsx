@@ -44,7 +44,7 @@ const Settings = ({ darkMode, setDarkMode }) => {
               darkMode ? "text-[#5F7DB0]" : "text-[#2C3E68]"
             }`}
           >
-            Library
+            BiblioTech
           </span>
 
           
