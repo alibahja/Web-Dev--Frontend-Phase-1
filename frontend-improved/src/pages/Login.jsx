@@ -71,7 +71,7 @@ function Login({ darkMode }) {
           <h2 className={`font-serif italic font-black text-3xl tracking-tighter mb-2 ${
             darkMode ? 'text-[#5F7DB0]' : 'text-[#2C3E68]'
           }`}>
-            Library
+            BiblioTech
           </h2>
           <p className="text-sm font-bold uppercase tracking-[0.2em] opacity-50">
             Sign in to continue
