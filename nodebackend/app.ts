@@ -1,3 +1,5 @@
+
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -11,7 +13,8 @@ import adminRoutes from './src/routes/adminRoutes';
 import emailRoutes from './src/routes/emailRoutes';
 import pool, { initializeDatabase } from './src/config/database';
 import path from 'path';
-
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './src/config/swagger';
 dotenv.config();
 
 const app = express();
@@ -35,6 +38,8 @@ app.use('/api/books', bookRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 // Health check
