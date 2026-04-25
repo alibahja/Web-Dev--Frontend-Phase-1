@@ -1,68 +1,88 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api/client";
+import { extractList } from "../api/normalize";
 
 const DisplayComm = ({ darkMode }) => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
-  
   const [newComm, setNewComm] = useState({ name: "", description: "", category: "" });
   const [error, setError] = useState("");
+  const [communities, setCommunities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [banner, setBanner] = useState("");
 
- const currentUser = "Ali"; // simulate logged in user
+  const load = () => {
+    setLoading(true);
+    api
+      .get("/api/communities")
+      .then((res) => {
+        const list = extractList(res.data).map((c) => ({
+          id: c._id ?? c.id,
+          name: c.name,
+          description: c.description ?? "",
+          category: c.category ?? "",
+          admin: c.admin?.name ?? c.adminName ?? c.createdBy ?? c.admin ?? "",
+          members: c.memberCount ?? c.members?.length ?? c.members ?? 0,
+        }));
+        setCommunities(list);
+      })
+      .catch(() => setCommunities([]))
+      .finally(() => setLoading(false));
+  };
 
-const [communities, setCommunities] = useState([
-  {
-    id: 1,
-    name: "Fantasy Lovers",
-    description: "A place to discuss magical worlds and epic adventures.",
-    category: "Fantasy",
-    admin: "Sarah",
-    members: ["Sarah", "John", "Emma"]
-  },
-  {
-    id: 2,
-    name: "Academic Researchers",
-    description: "Share research papers and academic resources.",
-    category: "Academic",
-    admin: "Michael",
-    members: ["Michael", "David"]
-  }
-]);
+  useEffect(() => {
+    load();
+  }, []);
 
   const filtered = communities.filter((comm) =>
     comm.name.toLowerCase().includes(search.toLowerCase())
   );
 
-const handleCreateCommunity = (e) => {
-  e.preventDefault();
-  setError("");
-
-  if (communities.some((c) => c.name.toLowerCase() === newComm.name.toLowerCase())) {
-    setError("A community with this name already exists!");
-    return;
-  }
-
-  const createdComm = {
-    id: communities.length + 1,
-    ...newComm,
-    admin: currentUser,
-    members: [currentUser]
+  const openCreate = () => {
+    if (!localStorage.getItem("token")) {
+      navigate("/login", { state: { from: "/groups" } });
+      return;
+    }
+    setShowModal(true);
   };
 
-  setCommunities([createdComm, ...communities]);
-  setShowModal(false);
-  setNewComm({ name: "", description: "", category: "" });
+  const handleCreateCommunity = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!localStorage.getItem("token")) {
+      navigate("/login", { state: { from: "/groups" } });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { data } = await api.post("/api/communities", {
+        name: newComm.name.trim(),
+        description: newComm.description.trim(),
+        category: newComm.category.trim(),
+      });
+      const created = data.community ?? data;
+      const id = created._id ?? created.id;
+      setShowModal(false);
+      setNewComm({ name: "", description: "", category: "" });
+      setBanner("Community created.");
+      load();
+      if (id) navigate(`/groups/${id}`);
+    } catch (err) {
+      setError(err.response?.data?.message || err.response?.data?.error || "Could not create community.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-  // 🔥 navigate to detail page with state
-  navigate(`/groups/${createdComm.id}`, { state: createdComm });
-};
+  const requireLogin = () => navigate("/login");
 
   return (
-    // Outer wrapper handles the overall background
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#0A0F1F] text-[#F0F4FA]' : 'bg-[#F8F9FC] text-[#1F2937]'}`}>
       
-      {/* NAVBAR */}
       <nav className={`flex justify-between items-center px-8 py-4 border-b sticky top-0 z-50 transition-colors ${
         darkMode ? 'bg-[#1E2740] border-[#2D3748]' : 'bg-white border-[#E2E8F0] shadow-sm'
       }`}>
@@ -71,21 +91,22 @@ const handleCreateCommunity = (e) => {
         </span>
 
         <div className="flex items-center gap-6">
-          <button onClick={() => navigate("/")} className="hover:opacity-70 transition">Home</button>
-          <button className={`font-semibold ${darkMode ? 'text-[#5F7DB0]' : 'text-[#2C3E68]'}`}>Groups</button>
-          <button onClick={() => navigate('/profile')} className="hover:opacity-70 transition">
+          <button type="button" onClick={() => navigate("/")} className="hover:opacity-70 transition">Home</button>
+          <span className={`font-semibold ${darkMode ? 'text-[#5F7DB0]' : 'text-[#2C3E68]'}`}>Groups</span>
+          <button type="button" onClick={() => navigate('/profile')} className="hover:opacity-70 transition">
   Profile
 </button>
           
         </div>
       </nav>
 
-      {/* HERO SECTION */}
       <section className="text-center py-16 px-6">
         <h2 className="text-5xl font-black mb-4 tracking-tight">Explore Communities</h2>
         <p className={`mb-10 text-lg max-w-2xl mx-auto ${darkMode ? 'text-[#A0AEC0]' : 'text-[#4A5568]'}`}>
           Join discussions, share opinions, and connect with fellow readers in specialized book clubs.
         </p>
+
+        {banner && <p className="text-emerald-500 font-semibold mb-4">{banner}</p>}
 
         <div className="flex justify-center gap-4 flex-wrap">
           <input
@@ -99,7 +120,8 @@ const handleCreateCommunity = (e) => {
           />
 
           <button 
-            onClick={() => setShowModal(true)}
+            type="button"
+            onClick={openCreate}
             className={`px-8 py-3 rounded-xl text-white font-bold transition shadow-lg active:scale-95 ${
               darkMode ? 'bg-[#5F7DB0] hover:bg-[#4A6A9E]' : 'bg-[#2C3E68] hover:bg-[#1F2F4F]'
             }`}
@@ -109,9 +131,9 @@ const handleCreateCommunity = (e) => {
         </div>
       </section>
 
-      {/* COMMUNITY CARDS */}
       <section className="px-10 pb-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-        {filtered.map((comm) => (
+        {loading && <p className="col-span-full text-center opacity-70">Loading communities…</p>}
+        {!loading && filtered.map((comm) => (
           <div
             key={comm.id}
             className={`rounded-3xl p-8 shadow-md hover:shadow-2xl hover:-translate-y-2 transition duration-300 flex flex-col justify-between border ${
@@ -123,7 +145,7 @@ const handleCreateCommunity = (e) => {
                 <span className={`text-[10px] uppercase tracking-widest font-black px-3 py-1 rounded-lg ${
                   darkMode ? 'bg-[#0A0F1F] text-[#5F7DB0]' : 'bg-[#F8F9FC] text-[#2C3E68]'
                 }`}>
-                  {comm.category}
+                  {comm.category || "General"}
                 </span>
                 <span className="text-sm font-bold opacity-60">👥 {comm.members}</span>
               </div>
@@ -134,7 +156,11 @@ const handleCreateCommunity = (e) => {
             </div>
 
             <button
-              onClick={() => navigate(`/groups/${comm.id}`, { state: comm })}
+              type="button"
+              onClick={() => {
+                 if (!localStorage.getItem("token")) return requireLogin();
+                navigate(`/groups/${comm.id}`)
+              }}
               className={`w-full py-3 rounded-xl border-2 font-bold transition-all ${
                 darkMode 
                 ? 'border-[#5F7DB0] text-[#5F7DB0] hover:bg-[#5F7DB0] hover:text-white' 
@@ -147,7 +173,6 @@ const handleCreateCommunity = (e) => {
         ))}
       </section>
 
-      {/* CREATE COMMUNITY MODAL */}
 {showModal && (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm transition-opacity duration-300 animate-[fadeIn_0.2s_ease-out]">
     <div className={`w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl border transition-all duration-300 transform animate-[zoomIn_0.3s_ease-out] ${
@@ -176,9 +201,9 @@ const handleCreateCommunity = (e) => {
 
         <div className="flex gap-4 pt-4">
           <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 font-bold opacity-50 hover:opacity-100">Cancel</button>
-          <button type="submit" className={`flex-1 py-3 rounded-xl text-white font-bold shadow-lg hover:-translate-y-1 active:scale-95 transition-all ${
+          <button type="submit" disabled={submitting} className={`flex-1 py-3 rounded-xl text-white font-bold shadow-lg hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 ${
             darkMode ? 'bg-[#5F7DB0]' : 'bg-[#2C3E68]'
-          }`}>Create</button>
+          }`}>{submitting ? "…" : "Create"}</button>
         </div>
       </form>
     </div>
@@ -188,7 +213,6 @@ const handleCreateCommunity = (e) => {
   );
 };
 
-// Helper component for modal inputs to keep code clean
 const ModalInput = ({ label, value, placeholder, darkMode, onChange }) => (
   <div>
     <label className="text-xs font-black uppercase tracking-widest opacity-50 block mb-2">{label}</label>
