@@ -1,5 +1,5 @@
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as M, AnimatePresence } from "framer-motion";
 
 const CustomAlert = ({ show, onClose, title, message, type = "success" }) => {
   const colors = {
@@ -12,7 +12,7 @@ const CustomAlert = ({ show, onClose, title, message, type = "success" }) => {
     <AnimatePresence>
       {show && (
         <>
-          <motion.div
+          <M.div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -20,7 +20,7 @@ const CustomAlert = ({ show, onClose, title, message, type = "success" }) => {
             onClick={onClose}
           />
 
-          <motion.div
+          <M.div
             className="fixed inset-0 z-50 flex items-center justify-center px-4"
             initial={{ opacity: 0, scale: 0.8, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -54,7 +54,7 @@ const CustomAlert = ({ show, onClose, title, message, type = "success" }) => {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </M.div>
         </>
       )}
     </AnimatePresence>
