@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import defaultimage from '../assets/default-book-cover.jpg';
 
@@ -18,7 +19,9 @@ const BookCard = ({ book, darkMode }) => {
             src={book.coverUrl || defaultCover}
             alt={book.title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={(e) => (e.target.src = defaultCover)}
+            onError={(e) => {
+              e.target.src = defaultCover;
+            }}
           />
         </div>
 
