@@ -75,8 +75,8 @@ Multer — File uploads
 Nodemailer — Email service
 Swagger UI — API documentation
 
-
 # Project Structure
+
 bibliotech/
 ├── frontend-improved/        # React frontend
 │   ├── src/
