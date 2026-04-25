@@ -1,0 +1,33 @@
+import axios from 'axios';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+export const api = axios.create({
+  baseURL: API_BASE,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      const p = window.location.pathname;
+      if (!p.startsWith('/login') && !p.startsWith('/register')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.assign('/login');
+      }
+    }
+    return Promise.reject(err);
+  }
+);
+
+export default api;
