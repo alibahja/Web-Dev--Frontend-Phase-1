@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
+import { motion as M, AnimatePresence } from "framer-motion";
 import defaultimage from "../assets/default-book-cover.jpg";
 import CustomAlert from "./CustomAlert";
+import api from "../api/client";
+import { extractList, normalizeBook } from "../api/normalize";
 
 const BookSplash = ({ darkMode, title, author, onDone }) => {
   const [phase, setPhase] = useState("closed");
@@ -22,13 +24,11 @@ const BookSplash = ({ darkMode, title, author, onDone }) => {
 
   if (!visible) return null;
 
-  // colors
   const bg = darkMode ? "#0A0F1F" : "#F8F9FC";
   const coverBg = darkMode ? "#1E2740" : "#2C3E68";
   const coverBorder = darkMode ? "#5F7DB0" : "#4A6A9E";
   const spineCol = darkMode ? "#162035" : "#1F2F4F";
   const pageCol = darkMode ? "#e8dcc8" : "#f5efe6";
-  const gold = darkMode ? "#7BA3D4" : "#ffffff";
   const textMain = darkMode ? "#F0F4FA" : "#ffffff";
   const textSub = darkMode ? "#7BA3D4" : "rgba(255,255,255,0.75)";
 
@@ -37,14 +37,13 @@ const BookSplash = ({ darkMode, title, author, onDone }) => {
   return (
     <AnimatePresence>
       {visible && (
-        <motion.div
+        <M.div
           initial={{ opacity: 1 }}
           animate={{ opacity: phase === "leaving" ? 0 : 1 }}
           transition={{ duration: 0.35, ease: "easeInOut" }}
           className="fixed inset-0 z-[9999] overflow-hidden flex"
           style={{ background: bg }}
         >
-          {/* LEFT SIDE (pages) */}
           <div
             className="w-1/2 h-full"
             style={{
@@ -52,12 +51,9 @@ const BookSplash = ({ darkMode, title, author, onDone }) => {
               opacity: phase === "closed" ? 0 : 1,
               transition: "opacity 0.3s ease 0.25s",
             }}
-          >
-          </div>
+          />
 
-          {/* RIGHT SIDE */}
           <div className="w-1/2 h-full relative">
-            {/* SPINE */}
             <div
               className="absolute left-0 top-0 h-full w-[6px]"
               style={{
@@ -67,18 +63,15 @@ const BookSplash = ({ darkMode, title, author, onDone }) => {
               }}
             />
 
-            {/* COVER */}
             <div
               className="absolute inset-0"
               style={{
                 transform: `rotateY(${flipAngle}deg)`,
                 transformOrigin: "left center",
                 transformStyle: "preserve-3d",
-                transition:
-                  "transform 0.85s cubic-bezier(0.4,0,0.2,1)",
+                transition: "transform 0.85s cubic-bezier(0.4,0,0.2,1)",
               }}
             >
-              {/* FRONT */}
               <div
                 className="absolute inset-0 flex flex-col items-center justify-center gap-6 p-12"
                 style={{
@@ -111,24 +104,21 @@ const BookSplash = ({ darkMode, title, author, onDone }) => {
                 </div>
               </div>
 
-              {/* INSIDE */}
               <div
                 className="absolute inset-0 flex items-center justify-center p-12"
                 style={{
                   transform: "rotateY(180deg)",
                   backfaceVisibility: "hidden",
-                  background:
-                    "linear-gradient(160deg, #f5efe6 0%, #ede0cc 100%)",
+                  background: "linear-gradient(160deg, #f5efe6 0%, #ede0cc 100%)",
                 }}
               >
                 <p className="text-center italic text-[#4a3020] max-w-md text-lg leading-relaxed">
-                  "Between every life and another, there is always a story waiting."
+                  &quot;Between every life and another, there is always a story waiting.&quot;
                 </p>
               </div>
             </div>
 
-            {/* TITLE — CENTER OF RIGHT SIDE */}
-            <motion.div
+            <M.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{
                 opacity: phase === "opening" || phase === "open" || phase === "leaving" ? 1 : 0,
@@ -141,27 +131,97 @@ const BookSplash = ({ darkMode, title, author, onDone }) => {
               <p className="text-xs uppercase tracking-[3px] opacity-70 mt-1">
                 by {author}
               </p>
-            </motion.div>
+            </M.div>
           </div>
-
-          
-        </motion.div>
+        </M.div>
       )}
     </AnimatePresence>
   );
 };
 
 const BookDetail = ({ darkMode }) => {
-  const [showAlert, setShowAlert] = useState(false);
+  const { id } = useParams();
   const location = useLocation();
-  const book = location.state?.book;
+  const navigate = useNavigate();
+  const initialBook = location.state?.book;
   const isRandom = location.state?.isRandom || false;
 
-  const [showSplash, setShowSplash]               = useState(true);
-  const [showDiceAnimation, setShowDiceAnimation]  = useState(isRandom);
-  const [showRateModal, setShowRateModal]           = useState(false);
-  const [userRating, setUserRating]                 = useState(0);
-  const [hoverRating, setHoverRating]               = useState(0);
+  const [data, setData] = useState(() =>
+    initialBook && String(initialBook.id) === String(id) ? normalizeBook(initialBook) : null
+  );
+  const [loading, setLoading] = useState(() => !(initialBook && String(initialBook.id) === String(id)));
+  const [loadError, setLoadError] = useState("");
+  const [moreBooks, setMoreBooks] = useState([]);
+
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertPayload, setAlertPayload] = useState({ title: "", message: "", type: "success" });
+
+  const showMessage = (title, message, type = "success") => {
+    setAlertPayload({ title, message, type });
+    setShowAlert(true);
+  };
+
+  const [showSplash, setShowSplash] = useState(true);
+  const [showDiceAnimation, setShowDiceAnimation] = useState(isRandom);
+  const [showRateModal, setShowRateModal] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [bookStatus, setBookStatus] = useState({
+    isBorrowed: false,
+    isCompleted: false,
+    isReading: false,
+    isWishlist: false,
+    isFavorite: false,
+    isPurchased: false
+});
+
+  const token = () => localStorage.getItem("token");
+  const requireLogin = () => {
+    navigate("/login", { state: { from: `/book/${id}` } });
+  };
+  useEffect(() => {
+    if (token() && data?.id) {
+        const fetchStatus = async () => {
+            try {
+                const { data: statusData } = await api.get(`/api/profile/book/${data.id}/status`);
+                setBookStatus(statusData);
+            } catch (err) {
+                console.error('Failed to fetch book status:', err);
+            }
+        };
+        fetchStatus();
+    }
+}, [data?.id]);
+  const loadBook = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const { data: body } = await api.get(`/api/books/${id}`);
+      const raw = body.book ?? body;
+      const book = normalizeBook(raw);
+      setData(book);
+      setUserRating(Number(raw.userRating ?? raw.myRating ?? raw.ratingUser ?? 0) || 0);
+
+      if (book?.author) {
+        try {
+          const s = await api.get(`/api/books/search?q=${encodeURIComponent(book.author)}`);
+          const list = extractList(s.data)
+            .map(normalizeBook)
+            .filter((b) => b && String(b.id) !== String(id))
+            .slice(0, 4);
+          setMoreBooks(list);
+        } catch {
+          setMoreBooks([]);
+        }
+      }
+    } catch (e) {
+      setLoadError(e.response?.data?.message || e.response?.data?.error || "Could not load this book.");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -174,39 +234,113 @@ const BookDetail = ({ darkMode }) => {
     }
   }, [isRandom]);
 
-  const data = book || {
-    id: 1,
-    title: "The Midnight Library",
-    author: "Matt Haig",
-    rating: 4.82,
-    description:
-      "Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived.",
-    copiesleft: 5,
-    publisher: "Penguin Books",
-    placeOfPublish: "London, UK",
-    language: "English",
-    ISBN: "978-0525559474",
-    genre: "Fantasy",
-    type: "Hardcover",
-    pages: 304,
-    publicationDate: "August 13, 2020",
+  useEffect(() => {
+    loadBook();
+  }, [loadBook]);
+
+ const handleBorrow = async () => {
+    if (!data) return;
+    if (!token()) return requireLogin();
+    if (bookStatus.isBorrowed) {
+        showMessage("Already borrowed", "You have already borrowed this book.", "info");
+        return;
+    }
+    setActionLoading(true);
+    try {
+        await api.post("/api/profile/borrow", { bookId: data.id, daysToBorrow: 14 });
+        setBookStatus(prev => ({ ...prev, isBorrowed: true }));
+        showMessage("Book borrowed", "You have successfully borrowed this book. Enjoy reading 📚", "success");
+    } catch (e) {
+        showMessage("Borrow failed", e.response?.data?.message || e.response?.data?.error || "Could not borrow.", "error");
+    } finally {
+        setActionLoading(false);
+    }
+};
+
+  const handleBuy = async () => {
+    if (!data) return;
+    if (!token()) return requireLogin();
+    setActionLoading(true);
+    try {
+      await api.post("/api/profile/collection", {
+        bookId: data.id,
+        status: "purchased",
+        purchaseDate: new Date().toISOString().slice(0, 10),
+      });
+      showMessage("Added to library", "Purchase recorded on your profile.", "success");
+    } catch (e) {
+      showMessage("Purchase failed", e.response?.data?.message || e.response?.data?.error || "Could not complete purchase.", "error");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const moreBooks = [
-    { id: 101, title: "How to Stop Time",          year: 2017 },
-    { id: 102, title: "The Humans",                year: 2013 },
-    { id: 103, title: "Notes on a Nervous Planet", year: 2018 },
-    { id: 104, title: "The Comfort Book",          year: 2021 },
-  ];
+  const toggleShelf = async (status, displayStatus) => {
+    if (!data) return;
+    if (!token()) return requireLogin();
+    setActionLoading(true);
+    try {
+        const isActive = bookStatus[displayStatus];
+        
+        if (isActive) {
+            // Remove from collection
+            await api.delete("/api/profile/collection", { 
+                data: { bookId: data.id, status: status } 
+            });
+            setBookStatus(prev => ({ ...prev, [displayStatus]: false }));
+            showMessage("Removed", `Book removed from ${status} list.`, "success");
+        } else {
+            // Add to collection
+            await api.post("/api/profile/collection", { bookId: data.id, status });
+            setBookStatus(prev => ({ ...prev, [displayStatus]: true }));
+            showMessage("Added", `Book added to ${status} list.`, "success");
+        }
+    } catch (e) {
+        showMessage("Update failed", e.response?.data?.message || "Could not update shelf.", "error");
+    } finally {
+        setActionLoading(false);
+    }
+};
 
-  const roundedRating = Number(data.rating).toFixed(1);
+  const submitRating = async (star) => {
+    if (!data) return;
+    if (!token()) return requireLogin();
+    try {
+      await api.post("/api/profile/rating", { bookId: data.id, rating: star });
+      setUserRating(star);
+      setShowRateModal(false);
+      showMessage("Thanks!", "Your rating has been saved.", "success");
+    } catch (e) {
+      showMessage("Rating failed", e.response?.data?.message || e.response?.data?.error || "Could not save rating.", "error");
+    }
+  };
+
+  if (loading && !data) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? "bg-[#0A0F1F] text-white" : "bg-[#F8F9FC]"}`}>
+        <p className="font-semibold animate-pulse">Loading book…</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className={`min-h-screen flex flex-col items-center justify-center gap-4 px-6 ${darkMode ? "bg-[#0A0F1F] text-white" : "bg-[#F8F9FC]"}`}>
+        <p className="text-center font-semibold">{loadError || "Book not found."}</p>
+        <Link to="/" className="text-[#5F7DB0] font-bold underline">
+          Back home
+        </Link>
+      </div>
+    );
+  }
+
+  const roundedRating = Number(data.rating || 0).toFixed(1);
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${
       darkMode ? "bg-[#0A0F1F] text-[#F0F4FA]" : "bg-[#F8F9FC] text-[#1F2937]"
     }`}>
 
-      {/* ── BOOK OPENING SPLASH ── renders on top, removes itself after ~2.75s */}
       {showSplash && (
         <BookSplash
           darkMode={darkMode}
@@ -216,7 +350,6 @@ const BookDetail = ({ darkMode }) => {
         />
       )}
 
-      {/* --- NAVIGATION BAR --- */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] backdrop-blur-md border-b transition-all duration-300 ${
         darkMode
           ? "bg-[#1E2740]/80 border-[#2D3748]"
@@ -230,7 +363,7 @@ const BookDetail = ({ darkMode }) => {
               <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                 darkMode ? "bg-[#5F7DB0]/20 text-[#5F7DB0]" : "bg-white/20 text-white"
               }`}>
-                {data.genre}
+                {data.genre || "—"}
               </span>
             </div>
           </div>
@@ -245,12 +378,11 @@ const BookDetail = ({ darkMode }) => {
         </div>
       </nav>
 
-      {/* --- BACKGROUND GLOW --- */}
       <div className={`fixed top-0 left-0 w-full h-[500px] opacity-10 pointer-events-none blur-[120px] transition-colors ${
         darkMode ? "bg-[#5F7DB0]" : "bg-[#2C3E68]"
       }`} />
 
-      <motion.main
+      <M.main
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.5 }}
@@ -258,13 +390,13 @@ const BookDetail = ({ darkMode }) => {
       >
         <AnimatePresence>
           {showDiceAnimation && (
-            <motion.div
+            <M.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed top-0 left-0 w-screen h-screen z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
             >
-              <motion.div
+              <M.div
                 initial={{ scale: 0.7, rotate: 0 }}
                 animate={{ scale: [0.7, 1.15, 1], rotate: [0, 180, 360, 540] }}
                 exit={{ scale: 0.8, opacity: 0 }}
@@ -274,15 +406,13 @@ const BookDetail = ({ darkMode }) => {
                     ? "bg-[#1E2740] border-[#5F7DB0] text-white"
                     : "bg-white border-[#2C3E68] text-[#1F2937]"
                 }`}
-              >🎲</motion.div>
-            </motion.div>
+              >🎲</M.div>
+            </M.div>
           )}
         </AnimatePresence>
 
-        {/* MAIN DETAIL SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
 
-          {/* LEFT COLUMN: Cover & Actions */}
           <div className="lg:col-span-4 space-y-8">
             <div className={`group relative rounded-[2rem] overflow-hidden shadow-2xl border-8 transition-all duration-500 hover:rotate-1 ${
               darkMode ? "border-[#1E2740]" : "border-white"
@@ -290,29 +420,64 @@ const BookDetail = ({ darkMode }) => {
               <img src={data.coverUrl || defaultimage} alt={data.title} className="w-full h-auto object-cover" />
             </div>
             <div className="flex flex-col gap-4">
-             <button
-  onClick={() => setShowAlert(true)}
-  className={`py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 ${
-    darkMode ? "bg-[#5F7DB0] hover:bg-[#4A6A9E]" : "bg-[#2C3E68] hover:bg-[#1F2F4F]"
-  } text-white`}
->
-  📖 Borrow Now
-</button>
-              <button className={`py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 ${
+                      <button
+                              type="button"
+                             disabled={actionLoading || bookStatus.isBorrowed}
+                             onClick={handleBorrow}
+                            className={`py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 ${
+                             bookStatus.isBorrowed 
+                                 ? "bg-green-600 cursor-not-allowed"
+                            : darkMode ? "bg-[#5F7DB0] hover:bg-[#4A6A9E]" : "bg-[#2C3E68] hover:bg-[#1F2F4F]"
+                               } text-white`}
+                              >
+                          {bookStatus.isBorrowed ? "✓ Borrowed" : "📖 Borrow Now"}
+                </button>
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={handleBuy}
+                className={`py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 ${
                 darkMode ? "bg-[#6c6f74] hover:bg-[#3c4047]" : "bg-[#d41b1b] hover:bg-[#a62323]"
               } text-white`}>
                 📖 Buy Now
               </button>
               <div className="grid grid-cols-2 gap-3 mt-4">
-                <ShelfBtn icon="✓"  text="Read"         darkMode={darkMode} />
-                <ShelfBtn icon="📖" text="Reading"      darkMode={darkMode} />
-                <ShelfBtn icon="🔖" text="Want to Read" darkMode={darkMode} />
-                <ShelfBtn icon="❤"  text="Favorite"     darkMode={darkMode} />
-              </div>
+    <ShelfBtn 
+        icon="✓" 
+        text="Read" 
+        darkMode={darkMode} 
+        disabled={actionLoading} 
+        active={bookStatus.isCompleted}
+        onClick={() => toggleShelf("completed", "isCompleted")} 
+    />
+    <ShelfBtn 
+        icon="📖" 
+        text="Reading" 
+        darkMode={darkMode} 
+        disabled={actionLoading} 
+        active={bookStatus.isReading}
+        onClick={() => toggleShelf("reading", "isReading")} 
+    />
+    <ShelfBtn 
+        icon="🔖" 
+        text="Want to Read" 
+        darkMode={darkMode} 
+        disabled={actionLoading} 
+        active={bookStatus.isWishlist}
+        onClick={() => toggleShelf("wishlist", "isWishlist")} 
+    />
+    <ShelfBtn 
+        icon="❤" 
+        text="Favorite" 
+        darkMode={darkMode} 
+        disabled={actionLoading} 
+        active={bookStatus.isFavorite}
+        onClick={() => toggleShelf("favorite", "isFavorite")} 
+    />
+</div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Info */}
           <div className="lg:col-span-8 space-y-10">
             <section>
               <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter leading-tight">
@@ -332,22 +497,22 @@ const BookDetail = ({ darkMode }) => {
               darkMode ? "bg-[#1E2740] border-[#2D3748]" : "bg-white border-[#E2E8F0] shadow-xl shadow-blue-900/5"
             }`}>
               <h2 className="text-xs uppercase tracking-widest font-black mb-4 text-[#5F7DB0]">Synopsis</h2>
-              <p className="text-lg leading-relaxed opacity-90">{data.description}</p>
+              <p className="text-lg leading-relaxed opacity-90">{data.description || "No description available."}</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <StatCard label="Publisher"  value={data.publisher}       icon="🏢" darkMode={darkMode} />
-              <StatCard label="Date"       value={data.publicationDate} icon="📅" darkMode={darkMode} />
-              <StatCard label="Location"   value={data.placeOfPublish}  icon="📍" darkMode={darkMode} />
-              <StatCard label="ISBN"       value={data.ISBN}            icon="🔢" darkMode={darkMode} />
-              <StatCard label="Language"   value={data.language}        icon="🌐" darkMode={darkMode} />
-              <StatCard label="Type"       value={data.type}            icon="📚" darkMode={darkMode} />
-              <StatCard label="Pages"      value={data.pages}           icon="📄" darkMode={darkMode} />
+              <StatCard label="Publisher"  value={data.publisher || "—"}       icon="🏢" darkMode={darkMode} />
+              <StatCard label="Date"       value={data.publicationDate || "—"} icon="📅" darkMode={darkMode} />
+              <StatCard label="Location"   value={data.placeOfPublish || "—"}  icon="📍" darkMode={darkMode} />
+              <StatCard label="ISBN"       value={data.ISBN || "—"}            icon="🔢" darkMode={darkMode} />
+              <StatCard label="Language"   value={data.language || "—"}        icon="🌐" darkMode={darkMode} />
+              <StatCard label="Type"       value={data.type || "—"}            icon="📚" darkMode={darkMode} />
+              <StatCard label="Pages"      value={data.pages ?? "—"}           icon="📄" darkMode={darkMode} />
               <StatCard
                 label="Stock"
-                value={`${data.copiesleft} Left`}
+                value={`${data.copiesleft ?? "—"} Left`}
                 icon="📦"
-                color={data.copiesleft > 0 ? "text-emerald-500" : "text-red-500"}
+                color={Number(data.copiesleft) > 0 ? "text-emerald-500" : "text-red-500"}
                 darkMode={darkMode}
               />
             </div>
@@ -361,7 +526,11 @@ const BookDetail = ({ darkMode }) => {
               </div>
               <div className="flex flex-col items-center gap-3">
                 <button
-                  onClick={() => setShowRateModal(true)}
+                  type="button"
+                  onClick={() => {
+                    if (!token()) requireLogin();
+                    else setShowRateModal(true);
+                  }}
                   className={`px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all active:scale-95 ${
                     darkMode ? "bg-[#5F7DB0]" : "bg-[#2C3E68]"
                   }`}
@@ -378,27 +547,28 @@ const BookDetail = ({ darkMode }) => {
           </div>
         </div>
 
-        {/* MORE BOOKS BY AUTHOR */}
         <section className="pt-10 border-t border-gray-500/20">
           <h2 className="text-3xl font-black mb-8">More Work by {data.author}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {moreBooks.map((b) => (
+              <Link key={b.id} to={`/book/${b.id}`} state={{ book: b }}>
               <div
-                key={b.id}
                 className={`p-6 rounded-3xl border transition-all hover:-translate-y-2 cursor-pointer ${
                   darkMode ? "bg-[#1E2740] border-[#2D3748] hover:bg-[#25304d]" : "bg-white border-[#E2E8F0] hover:shadow-xl"
                 }`}
               >
-                <div className="aspect-[3/4] bg-gray-500/20 rounded-xl mb-4 flex items-center justify-center text-4xl opacity-50">📖</div>
+                <div className="aspect-[3/4] bg-gray-500/20 rounded-xl mb-4 flex items-center justify-center text-4xl opacity-50 overflow-hidden">
+                  {b.coverUrl ? <img src={b.coverUrl} alt="" className="w-full h-full object-cover" /> : "📖"}
+                </div>
                 <h3 className="font-bold truncate">{b.title}</h3>
-                <p className="text-sm opacity-60">{b.year}</p>
+                <p className="text-sm opacity-60">{b.year ?? "—"}</p>
               </div>
+              </Link>
             ))}
           </div>
         </section>
-      </motion.main>
+      </M.main>
 
-      {/* RATING MODAL */}
       {showRateModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className={`w-full max-w-sm p-10 rounded-[2.5rem] text-center border ${
@@ -409,31 +579,31 @@ const BookDetail = ({ darkMode }) => {
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
+                  type="button"
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  onClick={() => { setUserRating(star); setShowRateModal(false); }}
+                  onClick={() => submitRating(star)}
                   className="text-4xl transition-transform hover:scale-125"
                 >
                   <span className={(hoverRating || userRating) >= star ? "text-yellow-500" : "text-gray-300"}>★</span>
                 </button>
               ))}
             </div>
-            <button onClick={() => setShowRateModal(false)} className="text-sm font-bold opacity-50">Cancel</button>
+            <button type="button" onClick={() => setShowRateModal(false)} className="text-sm font-bold opacity-50">Cancel</button>
           </div>
         </div>
       )}
       <CustomAlert
   show={showAlert}
   onClose={() => setShowAlert(false)}
-  title="Book Borrowed!"
-  message="You have successfully borrowed this book. Enjoy reading 📚"
-  type="success"
+  title={alertPayload.title}
+  message={alertPayload.message}
+  type={alertPayload.type}
 />
     </div>
   );
 };
 
-/* ── Sub-components (unchanged) ── */
 const StatCard = ({ label, value, icon, color, darkMode }) => (
   <div className={`p-4 rounded-2xl border transition-all ${
     darkMode ? "bg-[#1E2740] border-[#2D3748]" : "bg-gray-50 border-[#E2E8F0]"
@@ -446,15 +616,25 @@ const StatCard = ({ label, value, icon, color, darkMode }) => (
   </div>
 );
 
-const ShelfBtn = ({ icon, text, darkMode }) => (
-  <button className={`flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all hover:scale-105 active:scale-95 ${
-    darkMode
-      ? "border-[#2D3748] bg-[#1E2740] text-[#A0AEC0] hover:text-white"
-      : "border-[#E2E8F0] bg-white text-[#4A5568] hover:bg-gray-50"
-  }`}>
-    <span>{icon}</span>
-    <span>{text}</span>
-  </button>
+const ShelfBtn = ({ icon, text, darkMode, onClick, disabled, active }) => (
+    <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className={`flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all hover:scale-105 active:scale-95 disabled:opacity-50 ${
+            active
+                ? darkMode 
+                    ? "bg-[#5F7DB0] border-[#5F7DB0] text-white" 
+                    : "bg-[#2C3E68] border-[#2C3E68] text-white"
+                : darkMode
+                    ? "border-[#2D3748] bg-[#1E2740] text-[#A0AEC0] hover:text-white"
+                    : "border-[#E2E8F0] bg-white text-[#4A5568] hover:bg-gray-50"
+        }`}
+    >
+        <span>{icon}</span>
+        <span>{text}</span>
+    </button>
 );
 
 export default BookDetail;
+
