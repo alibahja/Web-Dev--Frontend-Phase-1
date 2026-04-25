@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   FiArrowLeft,
   FiCheckCircle,
@@ -12,13 +12,18 @@ import {
 
 import hero from "../assets/hero.png";
 import defaultimage from "../assets/default-book-cover.jpg";
+import api from "../api/client";
+import { normalizeBook } from "../api/normalize";
 
 const BookCard = ({ book, darkMode }) => {
   const navigate = useNavigate();
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={() => navigate(`/book/${book.id}`, { state: { book } })}
+      onKeyDown={(e) => e.key === "Enter" && navigate(`/book/${book.id}`, { state: { book } })}
       className={`group flex-shrink-0 w-44 md:w-52 p-4 rounded-[2rem] cursor-pointer transition-all duration-500 hover:scale-105 ${
         darkMode
           ? "bg-[#1E2740]/40 hover:bg-[#1E2740]/80 border border-white/5"
@@ -30,7 +35,9 @@ const BookCard = ({ book, darkMode }) => {
           src={book.coverUrl || defaultimage}
           alt={book.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          onError={(e) => (e.target.src = defaultimage)}
+          onError={(e) => {
+            e.target.src = defaultimage;
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
           <span className="text-white text-xs font-bold uppercase tracking-widest">
@@ -52,7 +59,8 @@ const RoadmapStep = ({
   isCompleted,
   isUnlocked,
   isLast,
-  onToggle
+  onToggle,
+  hasJoined
 }) => {
   const scrollRef = useRef(null);
 
@@ -66,6 +74,8 @@ const RoadmapStep = ({
       scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
     }
   };
+
+  const books = (step.books || []).map((b) => normalizeBook(b.book ?? b)).filter(Boolean);
 
   return (
     <div className="relative flex flex-col items-center">
@@ -110,10 +120,11 @@ const RoadmapStep = ({
             </div>
 
             <button
+              type="button"
               onClick={() => onToggle(step.id)}
-              disabled={!isUnlocked}
+              disabled={!isUnlocked || !hasJoined}
               className={`p-3 rounded-2xl transition-all ${
-                !isUnlocked
+                !isUnlocked || !hasJoined
                   ? "cursor-not-allowed opacity-50 bg-gray-400/10 text-gray-400"
                   : isCompleted
                   ? "bg-green-500 text-white"
@@ -125,9 +136,10 @@ const RoadmapStep = ({
           </div>
 
           <div className="relative group">
-            {step.books.length > 2 && (
+            {books.length > 2 && (
               <>
                 <button
+                  type="button"
                   onClick={() => scroll("left")}
                   className="absolute left-[-15px] top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-blue-600 text-white opacity-0 group-hover:opacity-100"
                 >
@@ -135,6 +147,7 @@ const RoadmapStep = ({
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => scroll("right")}
                   className="absolute right-[-15px] top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-blue-600 text-white opacity-0 group-hover:opacity-100"
                 >
@@ -147,7 +160,7 @@ const RoadmapStep = ({
               ref={scrollRef}
               className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
             >
-              {step.books.map((book) => (
+              {books.map((book) => (
                 <BookCard key={book.id} book={book} darkMode={darkMode} />
               ))}
             </div>
@@ -168,32 +181,85 @@ const RoadmapStep = ({
 
 const RoadMap = ({ darkMode }) => {
   const navigate = useNavigate();
+  const { id: gameId } = useParams();
   const [completed, setCompleted] = useState([]);
+  const [roadmapSteps, setRoadmapSteps] = useState([]);
+  const [banner, setBanner] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [hasJoined, setHasJoined] = useState(false);
 
-  const roadmapSteps = [
-    {
-      id: 1,
-      level: "Beginner",
-      title: "Foundations",
-      books: [{ id: 1, title: "HTML Basics", author: "John Doe" }]
-    },
-    {
-      id: 2,
-      level: "Intermediate",
-      title: "JavaScript",
-      books: [{ id: 2, title: "JS Guide", author: "Alex" }]
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const [gameRes, progRes] = await Promise.all([
+          api.get(`/api/games/${gameId}`),
+          api.get(`/api/games/progress/${gameId}`).catch(() => ({ data: {} })),
+        ]);
+        if (cancel) return;
+        const raw = gameRes.data.game ?? gameRes.data;
+        
+        console.log('Raw game data:', raw);
+        console.log('Joined status:', raw.joined);
+        console.log('Progress response:', progRes.data);
+        
+        setHasJoined(raw.joined === true);
+
+        const stepsRaw = raw.steps ?? raw.roadmap ?? raw.modules ?? [];
+        const steps = Array.isArray(stepsRaw)
+          ? stepsRaw.map((s, i) => ({
+              id: s._id ?? s.id ?? `step-${i}`,
+              level: s.level ?? s.phase ?? "Level",
+              title: s.title ?? s.name ?? `Step ${i + 1}`,
+              books: s.books ?? s.readingList ?? [],
+            }))
+          : [];
+        setRoadmapSteps(steps);
+        
+        const prog = progRes.data?.progress ?? progRes.data;
+        // FIX: Use completedStepIds from the API response
+        const done = prog?.completedStepIds ?? prog?.completedSteps ?? prog?.completed ?? prog?.done ?? [];
+        console.log('Completed step IDs from API:', done);
+        setCompleted(Array.isArray(done) ? done.map(String) : []);
+      } catch (error) {
+        console.error('Error loading roadmap:', error);
+        if (!cancel) setRoadmapSteps([]);
+      } finally {
+        if (!cancel) setLoading(false);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [gameId]);
+
+  const toggleComplete = async (stepId) => {
+    if (!localStorage.getItem("token")) {
+      navigate("/login", { state: { from: `/roadmap/${gameId}` } });
+      return;
     }
-  ];
 
-  const toggleComplete = (id) => {
-    setCompleted((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    if (!hasJoined) {
+      setBanner("You need to join this game first to track progress!");
+      return;
+    }
+
+    const sid = String(stepId);
+    const wasDone = completed.includes(sid);
+    try {
+      await api.post("/api/games/complete-step", { gameId, stepId });
+      setCompleted((prev) =>
+        wasDone ? prev.filter((x) => x !== sid) : [...prev, sid]
+      );
+      setBanner(wasDone ? "Step marked incomplete." : "Step completed!");
+    } catch (e) {
+      setBanner(e.response?.data?.message || e.response?.data?.error || "Could not update progress.");
+    }
   };
 
-  const progress = Math.round(
-    (completed.length / roadmapSteps.length) * 100
-  );
+  const progress =
+    roadmapSteps.length === 0
+      ? 0
+      : Math.round((completed.length / roadmapSteps.length) * 100);
 
   return (
     <div
@@ -206,6 +272,7 @@ const RoadMap = ({ darkMode }) => {
         style={{ backgroundImage: `url(${hero})` }}
       >
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="absolute top-6 left-6 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition"
         >
@@ -216,6 +283,10 @@ const RoadMap = ({ darkMode }) => {
           Learning Roadmap
         </h1>
       </div>
+
+      {banner && (
+        <p className="text-center text-sm font-semibold text-[#5F7DB0] py-2 px-4">{banner}</p>
+      )}
 
       <div className="p-6">
         <div
@@ -237,24 +308,29 @@ const RoadMap = ({ darkMode }) => {
       </div>
 
       <div className="p-6 space-y-0">
-        {roadmapSteps.map((step, index) => (
+        {loading ? (
+          <p className="text-center opacity-70 py-8">Loading roadmap…</p>
+        ) : (
+          roadmapSteps.map((step, index) => (
           <RoadmapStep
             key={step.id}
             step={step}
             index={index}
             darkMode={darkMode}
-            isCompleted={completed.includes(step.id)}
+            isCompleted={completed.includes(String(step.id))}
             isUnlocked={
-              index === 0 || completed.includes(roadmapSteps[index - 1]?.id)
+              index === 0 || completed.includes(String(roadmapSteps[index - 1]?.id))
             }
             isLast={index === roadmapSteps.length - 1}
             onToggle={toggleComplete}
+            hasJoined={hasJoined}
           />
-        ))}
+        ))
+        )}
       </div>
 
-      {progress === 100 && (
-        <button className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-full shadow-lg hover:bg-green-600 transition">
+      {progress === 100 && roadmapSteps.length > 0 && (
+        <button type="button" className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-full shadow-lg hover:bg-green-600 transition">
           <FiAward />
           <span>Game Completed</span>
         </button>
