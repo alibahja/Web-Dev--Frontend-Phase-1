@@ -6,7 +6,7 @@ import { AuthRequest } from '../middlewares/authMiddleware';
 export const getAllBooks = async (req: Request, res: Response): Promise<void> => {
     try {
         const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 20;
+        const limit = parseInt(req.query.limit as string) || 12;
         const offset = (page - 1) * limit;
         
         const [books]: any = await pool.query(
@@ -46,73 +46,67 @@ export const getAllBooks = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Basic search (title, author, genre)
+// Basic search (title, author, genre)
 export const searchBooks = async (req: Request, res: Response): Promise<void> => {
     try {
         const { q, type } = req.query;
-        let query = '';
-        let params: any[] = [];
+        // 1. Ensure page and limit are actual numbers for SQL
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.max(1, parseInt(req.query.limit as string) || 12);
+        const offset = (page - 1) * limit;
         
+        let query = '';
+        let countQuery = '';
+        let params: any[] = [];
+        let countParams: any[] = [];
+        
+        const searchTerm = `%${String(q || "").toLowerCase()}%`;
+
         if (type === 'collection') {
-            // Search by collection/tag
-            query = `
-                SELECT id, title, author, description, cover_url, price, rating, year, genre, available_copies
-                FROM books 
-                WHERE tags LIKE ?
-                ORDER BY created_at DESC
-            `;
-            params = [`%${q}%`];
+            query = `SELECT id, title, author, description, cover_url as coverUrl, price, rating, year, genre, available_copies as copiesleft
+                     FROM books WHERE tags LIKE ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`;
+            params = [searchTerm, limit, offset];
+            countQuery = `SELECT COUNT(*) as count FROM books WHERE tags LIKE ?`;
+            countParams = [searchTerm];
         } else if (type === 'genre') {
-            // Search by genre
-            query = `
-                SELECT id, title, author, description, cover_url, price, rating, year, genre, available_copies
-                FROM books 
-                WHERE LOWER(genre) LIKE ?
-                ORDER BY created_at DESC
-            `;
-            params = [`%${q}%`];
+            query = `SELECT id, title, author, description, cover_url as coverUrl, price, rating, year, genre, available_copies as copiesleft
+                     FROM books WHERE LOWER(genre) LIKE ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`;
+            params = [searchTerm, limit, offset];
+            countQuery = `SELECT COUNT(*) as count FROM books WHERE LOWER(genre) LIKE ?`;
+            countParams = [searchTerm];
         } else {
-            // Basic search (title, author, genre)
-            query = `
-                SELECT id, title, author, description, cover_url, price, rating, year, genre, available_copies
-                FROM books 
-                WHERE LOWER(title) LIKE ? 
-                   OR LOWER(author) LIKE ? 
-                   OR LOWER(genre) LIKE ?
-                ORDER BY 
-                    CASE 
-                        WHEN LOWER(title) LIKE ? THEN 1
-                        WHEN LOWER(author) LIKE ? THEN 2
-                        ELSE 3
-                    END
-                LIMIT 50
-            `;
-            const searchTerm = `%${q}%`;
-            params = [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm];
+            // Standard Search
+            query = `SELECT id, title, author, description, cover_url as coverUrl, price, rating, year, genre, available_copies as copiesleft
+                     FROM books 
+                     WHERE LOWER(title) LIKE ? OR LOWER(author) LIKE ? OR LOWER(genre) LIKE ?
+                     ORDER BY CASE 
+                        WHEN LOWER(title) LIKE ? THEN 1 
+                        WHEN LOWER(author) LIKE ? THEN 2 
+                        ELSE 3 END
+                     LIMIT ? OFFSET ?`;
+            params = [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, limit, offset];
+            countQuery = `SELECT COUNT(*) as count FROM books WHERE LOWER(title) LIKE ? OR LOWER(author) LIKE ? OR LOWER(genre) LIKE ?`;
+            countParams = [searchTerm, searchTerm, searchTerm];
         }
         
         const [books]: any = await pool.query(query, params);
-        
+        const [total]: any = await pool.query(countQuery, countParams);
+        console.log(`Executing Query: LIMIT ${limit} OFFSET ${offset} for term: ${q}`);
         res.json({
             success: true,
-            books: books.map((book: any) => ({
-                id: book.id,
-                title: book.title,
-                author: book.author,
-                description: book.description,
-                coverUrl: book.cover_url,
-                price: book.price,
-                rating: book.rating,
-                year: book.year,
-                genre: book.genre,
-                copiesleft: book.available_copies
-            }))
+            books: books, // Using alias in SQL to match frontend expectations
+            total: total[0].count,
+            page: page,
+            limit: limit
         });
+
     } catch (error) {
         console.error('Search books error:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
 
+// Advanced search with multiple filters
 // Advanced search with multiple filters
 export const advancedSearch = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -130,76 +124,109 @@ export const advancedSearch = async (req: Request, res: Response): Promise<void>
             publisher
         } = req.query;
         
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 12;
+        const offset = (page - 1) * limit;
+        
         let query = `
             SELECT id, title, author, description, cover_url, price, rating, 
                    year, genre, pages, isbn, publisher, language, place_of_publish, available_copies
             FROM books 
             WHERE 1=1
         `;
+        let countQuery = `SELECT COUNT(*) as count FROM books WHERE 1=1`;
         let params: any[] = [];
+        let countParams: any[] = [];
         
         if (title) {
             query += ` AND LOWER(title) LIKE ?`;
             params.push(`%${title}%`);
+            countQuery += ` AND LOWER(title) LIKE ?`;
+            countParams.push(`%${title}%`);
         }
         
         if (author) {
             query += ` AND LOWER(author) LIKE ?`;
             params.push(`%${author}%`);
+            countQuery += ` AND LOWER(author) LIKE ?`;
+            countParams.push(`%${author}%`);
         }
         
         if (genre && genre !== 'All Genres') {
             query += ` AND LOWER(genre) = ?`;
             params.push(String(genre).toLowerCase());
+            countQuery += ` AND LOWER(genre) = ?`;
+            countParams.push(String(genre).toLowerCase());
         }
         
         if (isbn) {
             query += ` AND isbn LIKE ?`;
             params.push(`%${isbn}%`);
+            countQuery += ` AND isbn LIKE ?`;
+            countParams.push(`%${isbn}%`);
         }
         
         if (placeOfPublishing) {
             query += ` AND LOWER(place_of_publish) LIKE ?`;
             params.push(`%${placeOfPublishing}%`);
+            countQuery += ` AND LOWER(place_of_publish) LIKE ?`;
+            countParams.push(`%${placeOfPublishing}%`);
         }
         
         if (minPages) {
             query += ` AND pages >= ?`;
             params.push(parseInt(minPages as string));
+            countQuery += ` AND pages >= ?`;
+            countParams.push(parseInt(minPages as string));
         }
         
         if (maxPages) {
             query += ` AND pages <= ?`;
             params.push(parseInt(maxPages as string));
+            countQuery += ` AND pages <= ?`;
+            countParams.push(parseInt(maxPages as string));
         }
         
         if (minYear) {
             query += ` AND year >= ?`;
             params.push(parseInt(minYear as string));
+            countQuery += ` AND year >= ?`;
+            countParams.push(parseInt(minYear as string));
         }
         
         if (maxYear) {
             query += ` AND year <= ?`;
             params.push(parseInt(maxYear as string));
+            countQuery += ` AND year <= ?`;
+            countParams.push(parseInt(maxYear as string));
         }
         
         if (language) {
             query += ` AND LOWER(language) = ?`;
             params.push(String(language).toLowerCase());
+            countQuery += ` AND LOWER(language) = ?`;
+            countParams.push(String(language).toLowerCase());
         }
         
         if (publisher) {
             query += ` AND LOWER(publisher) LIKE ?`;
             params.push(`%${publisher}%`);
+            countQuery += ` AND LOWER(publisher) LIKE ?`;
+            countParams.push(`%${publisher}%`);
         }
         
-        query += ` ORDER BY title LIMIT 100`;
+        query += ` ORDER BY title, id LIMIT ? OFFSET ?`;
+        params.push(limit, offset);
         
         const [books]: any = await pool.query(query, params);
+        const [total]: any = await pool.query(countQuery, countParams);
         
         res.json({
             success: true,
             count: books.length,
+            total: total[0].count,
+            page: page,
+            limit: limit,
             books: books.map((book: any) => ({
                 id: book.id,
                 title: book.title,
@@ -292,7 +319,7 @@ export const getBooksByCollection = async (req: Request, res: Response): Promise
     try {
         const { collection } = req.params;
         let query = '';
-        let limit = 10;
+        let limit = 12;
         
         switch (collection) {
             case 'best-sellers':
@@ -358,7 +385,7 @@ export const getBooksByCollection = async (req: Request, res: Response): Promise
 export const getBooksByGenre = async (req: Request, res: Response): Promise<void> => {
     try {
         const { genre } = req.params;
-        const limit = parseInt(req.query.limit as string) || 20;
+        const limit = parseInt(req.query.limit as string) || 12;
         
         const [books]: any = await pool.query(
             `SELECT id, title, author, cover_url, price, rating, year, description
