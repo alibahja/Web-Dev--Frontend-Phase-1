@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import api from "../api/client";
 
 function Register({ darkMode}) {
   const navigate = useNavigate();
@@ -37,21 +37,21 @@ function Register({ darkMode}) {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/register", {
+      const response = await api.post("/api/auth/register", {
         full_name: formData.full_name,
         email: formData.email,
         password: formData.password,
         role: formData.role,
       });
 
-      if (response.data.success) {
+      if (response.data.success !== false) {
         setMessage("Account created! Redirecting to login...");
         setTimeout(() => {
-          navigate("/");
+          navigate("/login");
         }, 1200);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
+      setError(err.response?.data?.message || err.response?.data?.error || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -62,11 +62,10 @@ function Register({ darkMode}) {
       darkMode ? 'bg-[#0A0F1F] text-[#F0F4FA]' : 'bg-[#F8F9FC] '
     }`}>
 
-       <button onClick={()=>navigate(-1)}  className="fixed top-8 left-20 group flex items-center gap-2 mb-6 text-sm font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-all">
+       <button type="button" onClick={()=>navigate(-1)}  className="fixed top-8 left-20 group flex items-center gap-2 mb-6 text-sm font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-all">
           <span className="group-hover:-translate-x-1 transition-transform">←</span>Back
         </button>
       
-      {/* BACKGROUND DECORATION */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
         <div className={`absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl ${darkMode ? 'bg-[#5F7DB0]' : 'bg-[#2C3E68]'}`}></div>
         <div className={`absolute -bottom-24 -left-24 w-96 h-96 rounded-full blur-3xl ${darkMode ? 'bg-[#5F7DB0]' : 'bg-[#2C3E68]'}`}></div>
@@ -89,7 +88,6 @@ function Register({ darkMode}) {
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          {/* FULL NAME */}
           <div className="space-y-2 md:col-span-2">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Full Name</label>
             <input
@@ -105,7 +103,6 @@ function Register({ darkMode}) {
             />
           </div>
 
-          {/* EMAIL */}
           <div className="space-y-2 md:col-span-2">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Email Address</label>
             <input
@@ -121,7 +118,6 @@ function Register({ darkMode}) {
             />
           </div>
 
-          {/* PASSWORD */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Password</label>
             <input
@@ -137,7 +133,6 @@ function Register({ darkMode}) {
             />
           </div>
 
-          {/* CONFIRM PASSWORD */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Confirm</label>
             <input
@@ -153,22 +148,7 @@ function Register({ darkMode}) {
             />
           </div>
 
-          {/* ROLE SELECT */}
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Account Role</label>
-            <select 
-              name="role" 
-              value={formData.role} 
-              onChange={handleChange}
-              className={`w-full px-5 py-3.5 rounded-2xl outline-none transition-all border cursor-pointer appearance-none ${
-                darkMode ? 'bg-[#0A0F1F] border-[#2D3748] focus:border-[#5F7DB0] text-white' : 'bg-gray-50 border-gray-200 focus:border-[#2C3E68] text-[#1F2937]'
-              } focus:ring-4 focus:ring-blue-500/10`}
-            >
-              <option value="student">Student</option>
-              <option value="librarian">Librarian</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+          
 
           <div className="md:col-span-2 space-y-4 mt-2">
             {message && <p className="text-emerald-500 text-xs font-bold text-center animate-pulse">{message}</p>}

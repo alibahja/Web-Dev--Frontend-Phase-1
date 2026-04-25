@@ -14,7 +14,6 @@ const Advanced = ({ darkMode }) => {
     maxPages: ''
   });
   
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleInputChange = (e) => {
@@ -37,21 +36,16 @@ const Advanced = ({ darkMode }) => {
       }
     }
 
-    setLoading(true);
-
-    // Create Search Query String
     const params = new URLSearchParams();
+    params.set('advanced', '1');
+    params.set('page', '1');
     Object.entries(searchCriteria).forEach(([key, value]) => {
       if (value.trim() !== '') {
         params.append(key, value.trim());
       }
     });
 
-    // Simulate a slight delay for "Advanced Processing" feel
-    setTimeout(() => {
-      setLoading(false);
-      navigate(`/search?${params.toString()}`);
-    }, 800);
+    navigate(`/search?${params.toString()}`);
   };
 
   const handleReset = () => {
@@ -211,16 +205,16 @@ const Advanced = ({ darkMode }) => {
             </button>
             <button
               type="submit"
-              disabled={loading || isFormEmpty}
+              disabled={isFormEmpty}
               className={`flex-[2] py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-xl ${
-                loading || isFormEmpty 
+                isFormEmpty 
                 ? 'bg-gray-400 cursor-not-allowed text-white' 
                 : darkMode 
                   ? 'bg-[#5F7DB0] hover:bg-[#4a648c] text-white shadow-[#5F7DB0]/20' 
                   : 'bg-[#2C3E68] hover:bg-[#1a253e] text-white shadow-[#2C3E68]/20'
               }`}
             >
-              {loading ? 'Processing...' : <><FaSearch className="text-xs" /> Search Books</>}
+              <><FaSearch className="text-xs" /> Search Books</>
             </button>
           </div>
         </form>

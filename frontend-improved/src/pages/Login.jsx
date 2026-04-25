@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import api from "../api/client";
 
 function Login({ darkMode }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/";
 
   const [formData, setFormData] = useState({
     email: "",
@@ -28,19 +30,21 @@ function Login({ darkMode }) {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", formData);
+      const response = await api.post("/api/auth/login", formData);
 
-      if (response.data.success) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+      if (response.data.success !== false) {
+        const token = response.data.token ?? response.data.accessToken;
+        const user = response.data.user ?? response.data;
+        if (token) localStorage.setItem("token", token);
+        if (user && typeof user === "object") localStorage.setItem("user", JSON.stringify(user));
         setMessage("Welcome back! Redirecting...");
 
         setTimeout(() => {
-          navigate("/");
+          navigate(from, { replace: true });
         }, 700);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
+      setError(err.response?.data?.message || err.response?.data?.error || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -51,12 +55,11 @@ function Login({ darkMode }) {
       darkMode ? 'bg-[#0A0F1F] text-[#F0F4FA]' : 'bg-[#F8F9FC]'
     }`}>
       
-        <button onClick={()=>navigate(-1)}  className="fixed top-8 left-20 group flex items-center gap-2 mb-6 text-sm font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-all">
+        <button type="button" onClick={()=>navigate(-1)}  className="fixed top-8 left-20 group flex items-center gap-2 mb-6 text-sm font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-all">
           <span className="group-hover:-translate-x-1 transition-transform">←</span>Back
         </button>
       
       
-      {/* BACKGROUND DECORATION */}
       <div className={`fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20`}>
         <div className={`absolute -top-24 -left-24 w-96 h-96 rounded-full blur-3xl ${darkMode ? 'bg-[#5F7DB0]' : 'bg-[#2C3E68]'}`}></div>
         <div className={`absolute -bottom-24 -right-24 w-96 h-96 rounded-full blur-3xl ${darkMode ? 'bg-[#5F7DB0]' : 'bg-[#2C3E68]'}`}></div>
@@ -66,7 +69,6 @@ function Login({ darkMode }) {
         darkMode ? 'bg-[#1E2740] border-[#2D3748]' : 'bg-white border-[#E2E8F0]'
       }`}>
         
-        {/* LOGO / TITLE */}
         <div className="text-center mb-10">
           <h2 className={`font-serif italic font-black text-3xl tracking-tighter mb-2 ${
             darkMode ? 'text-[#5F7DB0]' : 'text-[#2C3E68]'
@@ -79,7 +81,6 @@ function Login({ darkMode }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* EMAIL INPUT */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">
               Email Address
@@ -99,7 +100,6 @@ function Login({ darkMode }) {
             />
           </div>
 
-          {/* PASSWORD INPUT */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">
               Password
@@ -119,11 +119,9 @@ function Login({ darkMode }) {
             />
           </div>
 
-          {/* MESSAGES */}
           {message && <p className="text-emerald-500 text-xs font-bold text-center animate-pulse">{message}</p>}
           {error && <p className="text-red-500 text-xs font-bold text-center animate-bounce">{error}</p>}
 
-          {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={loading}
@@ -135,7 +133,6 @@ function Login({ darkMode }) {
           </button>
         </form>
 
-        {/* FOOTER */}
         <div className="mt-8 text-center">
           <p className="text-sm font-medium opacity-60">
             Don’t have an account?{" "}
