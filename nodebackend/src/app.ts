@@ -2,18 +2,18 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './src/routes/authRoutes';
-import profileRoutes from './src/routes/profileRoutes';
-import gameRoutes from './src/routes/gameRoutes';
-import communityRoutes from './src/routes/communityRoutes';
-import commentRoutes from './src/routes/commentRoutes';
-import bookRoutes from './src/routes/bookRoutes';
-import adminRoutes from './src/routes/adminRoutes';
-import emailRoutes from './src/routes/emailRoutes';
-import pool, { initializeDatabase } from './src/config/database';
+import authRoutes from './routes/authRoutes';
+import profileRoutes from './routes/profileRoutes';
+import gameRoutes from './routes/gameRoutes';
+import communityRoutes from './routes/communityRoutes';
+import commentRoutes from './routes/commentRoutes';
+import bookRoutes from './routes/bookRoutes';
+import adminRoutes from './routes/adminRoutes';
+import emailRoutes from './routes/emailRoutes';
+import pool, { initializeDatabase } from './config/database';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
-import swaggerSpec from './src/config/swagger';
+import swaggerSpec from './config/swagger';
 dotenv.config();
 
 const app = express();
