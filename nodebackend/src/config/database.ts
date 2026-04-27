@@ -11,7 +11,10 @@ export const createPool = () => {
         database: process.env.DB_NAME || 'bibliotech',
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 0
+        queueLimit: 0,
+        ssl: {
+    rejectUnauthorized: false
+  }
     });
 };
 
