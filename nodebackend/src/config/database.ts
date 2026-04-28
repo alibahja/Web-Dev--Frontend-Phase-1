@@ -32,7 +32,7 @@ export const initializeDatabase = async () => {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         );
-        ALTER TABLE users ADD COLUMN profile_picture TEXT NULL;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT NULL;
         
         CREATE TABLE IF NOT EXISTS books (
             id INT PRIMARY KEY AUTO_INCREMENT,
@@ -53,6 +53,7 @@ export const initializeDatabase = async () => {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         ALTER TABLE books ADD COLUMN tags VARCHAR(255) NULL;
+        ALTER TABLE books ADD COLUMN IF NOT EXISTS place_of_publish VARCHAR(255) NULL;
         
         CREATE TABLE IF NOT EXISTS user_books (
             id INT PRIMARY KEY AUTO_INCREMENT,
