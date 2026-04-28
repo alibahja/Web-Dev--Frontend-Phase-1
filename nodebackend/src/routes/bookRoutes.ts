@@ -217,7 +217,35 @@ router.get('/random', getRandomBook);
  *         description: Server error
  */
 router.get('/genres', getGenres);
-
+/**
+ * @swagger
+ * /books/stats/public:
+ *   get:
+ *     summary: Get public statistics for homepage
+ *     tags: [Books]
+ *     responses:
+ *       200:
+ *         description: Public statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     totalBooks:
+ *                       type: integer
+ *                     totalUsers:
+ *                       type: integer
+ *                     borrowedBooks:
+ *                       type: integer
+ *       500:
+ *         description: Server error
+ */
+router.get('/stats/public', getPublicStats);
 /**
  * @swagger
  * /books/collection/{collection}:
@@ -330,34 +358,6 @@ router.get('/genre/:genre', getBooksByGenre);
  */
 router.get('/:id', getBookDetails);
 
-/**
- * @swagger
- * /books/stats/public:
- *   get:
- *     summary: Get public statistics for homepage
- *     tags: [Books]
- *     responses:
- *       200:
- *         description: Public statistics
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 stats:
- *                   type: object
- *                   properties:
- *                     totalBooks:
- *                       type: integer
- *                     totalUsers:
- *                       type: integer
- *                     borrowedBooks:
- *                       type: integer
- *       500:
- *         description: Server error
- */
-router.get('/stats/public', getPublicStats);
+
 
 export default router;
