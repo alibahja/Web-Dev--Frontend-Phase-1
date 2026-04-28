@@ -1,15 +1,12 @@
 import { Request, Response } from 'express';
 import pool from '../config/database';
 import { AuthRequest } from '../middlewares/authMiddleware';
-import { profile } from 'console';
 
-// Get user profile with stats
 // Get user profile with stats
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.userId;
 
-        // Get user basic info
         const [users]: any = await pool.query(
             'SELECT id, full_name, email, role, profile_picture, created_at FROM users WHERE id = ?',
             [userId]
@@ -24,7 +21,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
 
         // Get total books read (from completed status)
         const [booksReadResult]: any = await pool.query(
-            'SELECT COUNT(*) as count FROM user_books WHERE user_id = ? AND status = "completed"',
+            "SELECT COUNT(*) as count FROM user_books WHERE user_id = ? AND status = 'completed'",
             [userId]
         );
         const booksRead = booksReadResult[0].count;
@@ -34,7 +31,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
             `SELECT COALESCE(SUM(b.pages), 0) as total_pages 
              FROM user_books ub
              JOIN books b ON ub.book_id = b.id
-             WHERE ub.user_id = ? AND ub.status = "completed"`,
+             WHERE ub.user_id = ? AND ub.status = 'completed'`,
             [userId]
         );
         const pagesRead = pagesResult[0].total_pages;
@@ -44,7 +41,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
             `SELECT b.genre, COUNT(*) as genre_count
              FROM user_books ub
              JOIN books b ON ub.book_id = b.id
-             WHERE ub.user_id = ? AND ub.status = "completed" AND b.genre IS NOT NULL
+             WHERE ub.user_id = ? AND ub.status = 'completed' AND b.genre IS NOT NULL
              GROUP BY b.genre
              ORDER BY genre_count DESC
              LIMIT 1`,
@@ -55,14 +52,14 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
         // Get books read this month
         const [monthlyResult]: any = await pool.query(
             `SELECT COUNT(*) as count FROM user_books 
-             WHERE user_id = ? AND status = "completed" 
+             WHERE user_id = ? AND status = 'completed' 
              AND MONTH(return_date) = MONTH(CURDATE()) 
              AND YEAR(return_date) = YEAR(CURDATE())`,
             [userId]
         );
         const monthlyRead = monthlyResult[0].count;
 
-        // Update or create reading_stats table for persistence
+        // Update or create reading_stats
         await pool.query(
             `INSERT INTO reading_stats (user_id, books_read_total, pages_read_total, favorite_genre, monthly_books_read)
              VALUES (?, ?, ?, ?, ?)
@@ -136,7 +133,6 @@ export const borrowBook = async (req: AuthRequest, res: Response): Promise<void>
         const userId = req.user?.userId;
         const { bookId, daysToBorrow = 14 } = req.body;
 
-        // Check if book exists and has available copies
         const [books]: any = await pool.query(
             'SELECT id, title, available_copies FROM books WHERE id = ?',
             [bookId]
@@ -155,7 +151,7 @@ export const borrowBook = async (req: AuthRequest, res: Response): Promise<void>
 
         // Check if user already borrowed this book
         const [existing]: any = await pool.query(
-            'SELECT id FROM user_books WHERE user_id = ? AND book_id = ? AND status = "borrowed" AND return_date IS NULL',
+            "SELECT id FROM user_books WHERE user_id = ? AND book_id = ? AND status = 'borrowed' AND return_date IS NULL",
             [userId, bookId]
         );
 
@@ -168,19 +164,16 @@ export const borrowBook = async (req: AuthRequest, res: Response): Promise<void>
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + daysToBorrow);
 
-        // Start transaction
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
         try {
-            // Add to user_books
             await connection.query(
                 `INSERT INTO user_books (user_id, book_id, status, borrow_date, due_date)
                  VALUES (?, ?, 'borrowed', ?, ?)`,
                 [userId, bookId, borrowDate, dueDate]
             );
 
-            // Decrease available copies
             await connection.query(
                 'UPDATE books SET available_copies = available_copies - 1 WHERE id = ?',
                 [bookId]
@@ -212,7 +205,6 @@ export const returnBook = async (req: AuthRequest, res: Response): Promise<void>
         const userId = req.user?.userId;
         const { bookId } = req.body;
 
-        // Find the borrowed record
         const [records]: any = await pool.query(
             `SELECT id FROM user_books 
              WHERE user_id = ? AND book_id = ? AND status = 'borrowed' AND return_date IS NULL`,
@@ -224,7 +216,6 @@ export const returnBook = async (req: AuthRequest, res: Response): Promise<void>
             return;
         }
 
-        // Get book details for pages
         const [bookInfo]: any = await pool.query(
             'SELECT pages, genre FROM books WHERE id = ?',
             [bookId]
@@ -234,38 +225,32 @@ export const returnBook = async (req: AuthRequest, res: Response): Promise<void>
         await connection.beginTransaction();
 
         try {
-            // Delete the borrowed record
             await connection.query(
                 'DELETE FROM user_books WHERE id = ?',
                 [records[0].id]
             );
 
-            // Check if completed record already exists
             const [existingCompleted]: any = await connection.query(
-                'SELECT id FROM user_books WHERE user_id = ? AND book_id = ? AND status = "completed"',
+                "SELECT id FROM user_books WHERE user_id = ? AND book_id = ? AND status = 'completed'",
                 [userId, bookId]
             );
 
-            // Only insert completed record if it doesn't exist
             if (existingCompleted.length === 0) {
                 await connection.query(
                     `INSERT INTO user_books (user_id, book_id, status, return_date)
                      VALUES (?, ?, 'completed', NOW())`,
                     [userId, bookId]
                 );
-                
-                // Update reading stats with pages and genre
+
                 const pages = bookInfo[0]?.pages || 0;
                 const genre = bookInfo[0]?.genre;
-                
-                // Get current stats
+
                 const [currentStats]: any = await connection.query(
                     'SELECT * FROM reading_stats WHERE user_id = ?',
                     [userId]
                 );
-                
+
                 if (currentStats.length > 0) {
-                    // Update existing stats
                     await connection.query(
                         `UPDATE reading_stats 
                          SET books_read_total = books_read_total + 1,
@@ -289,7 +274,6 @@ export const returnBook = async (req: AuthRequest, res: Response): Promise<void>
                         [pages, genre, genre, userId, userId]
                     );
                 } else {
-                    // Create new stats
                     await connection.query(
                         `INSERT INTO reading_stats (user_id, books_read_total, pages_read_total, monthly_books_read, favorite_genre)
                          VALUES (?, 1, ?, 1, ?)`,
@@ -298,7 +282,6 @@ export const returnBook = async (req: AuthRequest, res: Response): Promise<void>
                 }
             }
 
-            // Increase available copies
             await connection.query(
                 'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
                 [bookId]
@@ -323,7 +306,7 @@ export const returnBook = async (req: AuthRequest, res: Response): Promise<void>
 export const getBooksByStatus = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.userId;
-        const { status } = req.params; // reading, wishlist, favorite, completed, purchased
+        const { status } = req.params;
 
         const [books]: any = await pool.query(
             `SELECT b.id, b.title, b.author, b.cover_url, b.price, b.rating as book_rating,
@@ -335,7 +318,7 @@ export const getBooksByStatus = async (req: AuthRequest, res: Response): Promise
             [userId, status]
         );
 
-        let formattedBooks = books.map((book: any) => {
+        const formattedBooks = books.map((book: any) => {
             const baseBook: any = {
                 id: book.id,
                 title: book.title,
@@ -354,31 +337,26 @@ export const getBooksByStatus = async (req: AuthRequest, res: Response): Promise
             return baseBook;
         });
 
-        res.json({
-            success: true,
-            books: formattedBooks
-        });
+        res.json({ success: true, books: formattedBooks });
     } catch (error) {
         console.error('Get books by status error:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
 
-// Add book to collection (reading, wishlist, favorite)
+// Add book to collection
 export const addToCollection = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.userId;
         const { bookId, status, rating, purchaseDate } = req.body;
 
-        // Check if book exists, if not create a basic entry
         const [books]: any = await pool.query('SELECT id FROM books WHERE id = ?', [bookId]);
-        
+
         if (books.length === 0) {
             res.status(404).json({ success: false, message: 'Book not found' });
             return;
         }
 
-        // Check if already exists with same status
         const [existing]: any = await pool.query(
             'SELECT id FROM user_books WHERE user_id = ? AND book_id = ? AND status = ?',
             [userId, bookId, status]
@@ -398,17 +376,14 @@ export const addToCollection = async (req: AuthRequest, res: Response): Promise<
         if (status === 'purchased' && purchaseDate) {
             insertData.purchase_date = purchaseDate;
         }
-        
+
         if (rating) {
             insertData.rating = rating;
         }
 
         await pool.query('INSERT INTO user_books SET ?', [insertData]);
 
-        res.json({
-            success: true,
-            message: `Book added to ${status} successfully`
-        });
+        res.json({ success: true, message: `Book added to ${status} successfully` });
     } catch (error) {
         console.error('Add to collection error:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -426,7 +401,6 @@ export const updateRating = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Update rating in user_books
         const [result]: any = await pool.query(
             `UPDATE user_books 
              SET rating = ? 
@@ -439,7 +413,6 @@ export const updateRating = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Update average rating in books table
         await pool.query(
             `UPDATE books b 
              SET rating = (
@@ -457,15 +430,7 @@ export const updateRating = async (req: AuthRequest, res: Response): Promise<voi
     }
 };
 
-// Helper function
-function getRank(booksRead: number): string {
-    if (booksRead >= 50) return 'Scholar';
-    if (booksRead >= 25) return 'Book Master';
-    if (booksRead >= 10) return 'Book Lover';
-    if (booksRead >= 5) return 'Avid Reader';
-    return 'New Reader';
-}
-// Remove book from collection (reading, wishlist, favorite)
+// Remove book from collection
 export const removeFromCollection = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.userId;
@@ -481,10 +446,7 @@ export const removeFromCollection = async (req: AuthRequest, res: Response): Pro
             return;
         }
 
-        res.json({
-            success: true,
-            message: `Book removed from ${status} successfully`
-        });
+        res.json({ success: true, message: `Book removed from ${status} successfully` });
     } catch (error) {
         console.error('Remove from collection error:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -503,7 +465,7 @@ export const getBookStatus = async (req: AuthRequest, res: Response): Promise<vo
         );
 
         const userStatuses = statuses.map((s: any) => s.status);
-        
+
         res.json({
             success: true,
             isBorrowed: userStatuses.includes('borrowed'),
@@ -518,11 +480,21 @@ export const getBookStatus = async (req: AuthRequest, res: Response): Promise<vo
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
+
+// Helper function
+function getRank(booksRead: number): string {
+    if (booksRead >= 50) return 'Scholar';
+    if (booksRead >= 25) return 'Book Master';
+    if (booksRead >= 10) return 'Book Lover';
+    if (booksRead >= 5) return 'Avid Reader';
+    return 'New Reader';
+}
+
 // Get user's completed games
 export const getCompletedGames = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.userId;
-        
+
         const [games]: any = await pool.query(
             `SELECT g.id, g.title, g.description, g.image_url, g.difficulty, g.duration,
                     ugp.completed_at
@@ -532,7 +504,7 @@ export const getCompletedGames = async (req: AuthRequest, res: Response): Promis
              ORDER BY ugp.completed_at DESC`,
             [userId]
         );
-        
+
         res.json({
             success: true,
             games: games.map((game: any) => ({
@@ -555,7 +527,7 @@ export const getCompletedGames = async (req: AuthRequest, res: Response): Promis
 export const getCurrentGames = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.userId;
-        
+
         const [games]: any = await pool.query(
             `SELECT g.id, g.title, g.description, g.image_url, g.difficulty, g.duration,
                     ugp.joined_at,
@@ -567,7 +539,7 @@ export const getCurrentGames = async (req: AuthRequest, res: Response): Promise<
              ORDER BY ugp.joined_at DESC`,
             [userId, userId]
         );
-        
+
         res.json({
             success: true,
             games: games.map((game: any) => ({
