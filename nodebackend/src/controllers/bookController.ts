@@ -475,15 +475,14 @@ export const getGenres = async (req: Request, res: Response): Promise<void> => {
 // Get public stats for homepage (no authentication required)
 export const getPublicStats = async (req: Request, res: Response): Promise<void> => {
     try {
-        // Get total books count
         const [totalBooks]: any = await pool.query('SELECT COUNT(*) as count FROM books');
         
-        // Get total users count (excluding admins if you want)
-        const [totalUsers]: any = await pool.query('SELECT COUNT(*) as count FROM users WHERE role != "admin"');
+        const [totalUsers]: any = await pool.query(
+            "SELECT COUNT(*) as count FROM users WHERE role != 'admin'"
+        );
         
-        // Get currently borrowed books count
         const [borrowedBooks]: any = await pool.query(
-            'SELECT COUNT(*) as count FROM user_books WHERE status = "borrowed" AND return_date IS NULL'
+            "SELECT COUNT(*) as count FROM user_books WHERE status = 'borrowed' AND return_date IS NULL"
         );
         
         res.json({
@@ -495,7 +494,11 @@ export const getPublicStats = async (req: Request, res: Response): Promise<void>
             }
         });
     } catch (error) {
-        console.error('Get public stats error:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        console.error('Get public stats error:', error);  // Check Render logs for exact error
+         res.status(500).json({ 
+    success: false, 
+    message: 'Internal server error',
+    error: (error as Error).message  // ← add this temporarily
+});
     }
 };
