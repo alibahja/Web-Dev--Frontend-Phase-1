@@ -40,6 +40,16 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+app.get('/db-test', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT 1');
+    res.json({ success: true, rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err });
+  }
+});
+
 
 // Health check
 app.get('/api/health', (req, res) => {
